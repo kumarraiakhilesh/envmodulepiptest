@@ -1,0 +1,4225 @@
+[
+    {
+        "check_type": "terraform",
+        "results": {
+            "passed_checks": [
+                {
+                    "check_id": "CKV_AZURE_34",
+                    "bc_check_id": "BC_AZR_NETWORKING_14",
+                    "check_name": "Ensure that 'Public access level' is set to Private for blob containers",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "container_access_type/[0]"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_container\" \"akhilesh_container\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_containers\n"
+                        ],
+                        [
+                            3,
+                            "  name                  = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  storage_account_id    = data.azurerm_storage_account.akhilesh_storagedata.id\n"
+                        ],
+                        [
+                            5,
+                            "  container_access_type = each.value.container_access_type\n"
+                        ],
+                        [
+                            6,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Conatiners\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Conatiners\\main.tf",
+                    "repo_file_path": "/Module/Conatiners/main.tf",
+                    "file_line_range": [
+                        1,
+                        6
+                    ],
+                    "resource": "module.storage_containers.azurerm_storage_container.akhilesh_container[\"st1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageBlobServiceContainerPrivateAccess",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        13,
+                        17
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/set-public-access-level-to-private-for-blob-containers",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Conatiners\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_118",
+                    "bc_check_id": "BC_AZR_NETWORKING_35",
+                    "check_name": "Ensure that Network Interfaces disable IP forwarding",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "enable_ip_forwarding"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_network_interface\" \"nic\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each            = var.nic\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  ip_configuration {\n"
+                        ],
+                        [
+                            7,
+                            "    name                          = \"internal\"\n"
+                        ],
+                        [
+                            8,
+                            "    subnet_id                     = data.azurerm_subnet.datasubnetblock.id \n"
+                        ],
+                        [
+                            9,
+                            "    private_ip_address_allocation = \"Dynamic\"\n"
+                        ],
+                        [
+                            10,
+                            "  }\n"
+                        ],
+                        [
+                            11,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\NIC\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NIC\\main.tf",
+                    "repo_file_path": "/Module/NIC/main.tf",
+                    "file_line_range": [
+                        1,
+                        11
+                    ],
+                    "resource": "module.nic.azurerm_network_interface.nic[\"nic1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.NetworkInterfaceEnableIPForwarding",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        34,
+                        38
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/ensure-that-network-interfaces-disable-ip-forwarding",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NIC\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_160",
+                    "bc_check_id": "BC_AZR_NETWORKING_57",
+                    "check_name": "Ensure that HTTP (port 80) access is restricted from the internet",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "security_rule"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_network_security_group\" \"nsg\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.nsg\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  # Rule for SSH (Port 22)\n"
+                        ],
+                        [
+                            7,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            8,
+                            "    name                       = \"allow-ssh\"\n"
+                        ],
+                        [
+                            9,
+                            "    priority                   = 100\n"
+                        ],
+                        [
+                            10,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            11,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            12,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            13,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            14,
+                            "    destination_port_range     = \"22\"\n"
+                        ],
+                        [
+                            15,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            16,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            17,
+                            "  }\n"
+                        ],
+                        [
+                            18,
+                            "  # Rule for HTTP (Port 80)\n"
+                        ],
+                        [
+                            19,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            20,
+                            "    name                       = \"allow-http\"\n"
+                        ],
+                        [
+                            21,
+                            "    priority                   = 101\n"
+                        ],
+                        [
+                            22,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            23,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            24,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            25,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            26,
+                            "    destination_port_range     = \"80\"\n"
+                        ],
+                        [
+                            27,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            28,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            29,
+                            "  }\n"
+                        ],
+                        [
+                            30,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\NSG\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf",
+                    "repo_file_path": "/Module/NSG/main.tf",
+                    "file_line_range": [
+                        1,
+                        30
+                    ],
+                    "resource": "module.nsg.azurerm_network_security_group.nsg[\"nsg1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.NSGRuleHTTPAccessRestricted",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        45,
+                        49
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/ensure-azure-http-port-80-access-from-the-internet-is-restricted",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_9",
+                    "bc_check_id": "BC_AZR_NETWORKING_2",
+                    "check_name": "Ensure that RDP access is restricted from the internet",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "security_rule"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_network_security_group\" \"nsg\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.nsg\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  # Rule for SSH (Port 22)\n"
+                        ],
+                        [
+                            7,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            8,
+                            "    name                       = \"allow-ssh\"\n"
+                        ],
+                        [
+                            9,
+                            "    priority                   = 100\n"
+                        ],
+                        [
+                            10,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            11,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            12,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            13,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            14,
+                            "    destination_port_range     = \"22\"\n"
+                        ],
+                        [
+                            15,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            16,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            17,
+                            "  }\n"
+                        ],
+                        [
+                            18,
+                            "  # Rule for HTTP (Port 80)\n"
+                        ],
+                        [
+                            19,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            20,
+                            "    name                       = \"allow-http\"\n"
+                        ],
+                        [
+                            21,
+                            "    priority                   = 101\n"
+                        ],
+                        [
+                            22,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            23,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            24,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            25,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            26,
+                            "    destination_port_range     = \"80\"\n"
+                        ],
+                        [
+                            27,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            28,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            29,
+                            "  }\n"
+                        ],
+                        [
+                            30,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\NSG\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf",
+                    "repo_file_path": "/Module/NSG/main.tf",
+                    "file_line_range": [
+                        1,
+                        30
+                    ],
+                    "resource": "module.nsg.azurerm_network_security_group.nsg[\"nsg1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.NSGRuleRDPAccessRestricted",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        45,
+                        49
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/bc-azr-networking-2",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_10",
+                    "bc_check_id": "BC_AZR_NETWORKING_3",
+                    "check_name": "Ensure that SSH access is restricted from the internet",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "security_rule"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_network_security_group\" \"nsg\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.nsg\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  # Rule for SSH (Port 22)\n"
+                        ],
+                        [
+                            7,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            8,
+                            "    name                       = \"allow-ssh\"\n"
+                        ],
+                        [
+                            9,
+                            "    priority                   = 100\n"
+                        ],
+                        [
+                            10,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            11,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            12,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            13,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            14,
+                            "    destination_port_range     = \"22\"\n"
+                        ],
+                        [
+                            15,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            16,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            17,
+                            "  }\n"
+                        ],
+                        [
+                            18,
+                            "  # Rule for HTTP (Port 80)\n"
+                        ],
+                        [
+                            19,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            20,
+                            "    name                       = \"allow-http\"\n"
+                        ],
+                        [
+                            21,
+                            "    priority                   = 101\n"
+                        ],
+                        [
+                            22,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            23,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            24,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            25,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            26,
+                            "    destination_port_range     = \"80\"\n"
+                        ],
+                        [
+                            27,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            28,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            29,
+                            "  }\n"
+                        ],
+                        [
+                            30,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\NSG\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf",
+                    "repo_file_path": "/Module/NSG/main.tf",
+                    "file_line_range": [
+                        1,
+                        30
+                    ],
+                    "resource": "module.nsg.azurerm_network_security_group.nsg[\"nsg1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.NSGRuleSSHAccessRestricted",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        45,
+                        49
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/bc-azr-networking-3",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_77",
+                    "bc_check_id": "BC_AZR_NETWORKING_22",
+                    "check_name": "Ensure that UDP Services are restricted from the Internet ",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "security_rule"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_network_security_group\" \"nsg\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.nsg\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  # Rule for SSH (Port 22)\n"
+                        ],
+                        [
+                            7,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            8,
+                            "    name                       = \"allow-ssh\"\n"
+                        ],
+                        [
+                            9,
+                            "    priority                   = 100\n"
+                        ],
+                        [
+                            10,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            11,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            12,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            13,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            14,
+                            "    destination_port_range     = \"22\"\n"
+                        ],
+                        [
+                            15,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            16,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            17,
+                            "  }\n"
+                        ],
+                        [
+                            18,
+                            "  # Rule for HTTP (Port 80)\n"
+                        ],
+                        [
+                            19,
+                            "  security_rule {\n"
+                        ],
+                        [
+                            20,
+                            "    name                       = \"allow-http\"\n"
+                        ],
+                        [
+                            21,
+                            "    priority                   = 101\n"
+                        ],
+                        [
+                            22,
+                            "    direction                  = \"Inbound\"\n"
+                        ],
+                        [
+                            23,
+                            "    access                     = \"Allow\"\n"
+                        ],
+                        [
+                            24,
+                            "    protocol                   = \"Tcp\"\n"
+                        ],
+                        [
+                            25,
+                            "    source_port_range          = \"*\"\n"
+                        ],
+                        [
+                            26,
+                            "    destination_port_range     = \"80\"\n"
+                        ],
+                        [
+                            27,
+                            "    source_address_prefix      = \"10.0.3.0/24\"\n"
+                        ],
+                        [
+                            28,
+                            "    destination_address_prefix = \"*\"\n"
+                        ],
+                        [
+                            29,
+                            "  }\n"
+                        ],
+                        [
+                            30,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\NSG\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf",
+                    "repo_file_path": "/Module/NSG/main.tf",
+                    "file_line_range": [
+                        1,
+                        30
+                    ],
+                    "resource": "module.nsg.azurerm_network_security_group.nsg[\"nsg1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.NSGRuleUDPAccessRestricted",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        45,
+                        49
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/ensure-that-udp-services-are-restricted-from-the-internet",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NSG\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_179",
+                    "bc_check_id": "BC_AZR_GENERAL_103",
+                    "check_name": "Ensure VM agent is installed",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "provision_vm_agent"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            9,
+                            "resource \"azurerm_linux_virtual_machine\" \"akhilesh_vm\" {\n"
+                        ],
+                        [
+                            10,
+                            "  for_each = var.virtual_machine\n"
+                        ],
+                        [
+                            11,
+                            "\n"
+                        ],
+                        [
+                            12,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            13,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            14,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            15,
+                            "  size                = each.value.vm_size\n"
+                        ],
+                        [
+                            16,
+                            "\n"
+                        ],
+                        [
+                            17,
+                            "  network_interface_ids = [\n"
+                        ],
+                        [
+                            18,
+                            "    data.azurerm_network_interface.akhilesh_data.id\n"
+                        ],
+                        [
+                            19,
+                            "  ]\n"
+                        ],
+                        [
+                            20,
+                            "\n"
+                        ],
+                        [
+                            21,
+                            "  admin_username = \"testadmin\"\n"
+                        ],
+                        [
+                            22,
+                            "  admin_password = \"Pas**********\"\n"
+                        ],
+                        [
+                            23,
+                            "\n"
+                        ],
+                        [
+                            24,
+                            "  disable_password_authentication = false\n"
+                        ],
+                        [
+                            25,
+                            "\n"
+                        ],
+                        [
+                            26,
+                            "  os_disk {\n"
+                        ],
+                        [
+                            27,
+                            "    name                 = \"${each.value.name}-osdisk\"\n"
+                        ],
+                        [
+                            28,
+                            "    caching              = \"ReadWrite\"\n"
+                        ],
+                        [
+                            29,
+                            "    storage_account_type = \"Standard_LRS\"\n"
+                        ],
+                        [
+                            30,
+                            "  }\n"
+                        ],
+                        [
+                            31,
+                            "\n"
+                        ],
+                        [
+                            32,
+                            "  source_image_reference {\n"
+                        ],
+                        [
+                            33,
+                            "    publisher = \"Canonical\"\n"
+                        ],
+                        [
+                            34,
+                            "    offer     = \"0001-com-ubuntu-server-jammy\"\n"
+                        ],
+                        [
+                            35,
+                            "    sku       = \"22_04-lts\"\n"
+                        ],
+                        [
+                            36,
+                            "    version   = \"latest\"\n"
+                        ],
+                        [
+                            37,
+                            "  }\n"
+                        ],
+                        [
+                            38,
+                            "\n"
+                        ],
+                        [
+                            39,
+                            "  # \u00f0\u0178\u201d\u00a5 NGINX auto install\n"
+                        ],
+                        [
+                            40,
+                            "  custom_data = base64encode(<<EOF\n"
+                        ],
+                        [
+                            41,
+                            "#!/bin/bash\n"
+                        ],
+                        [
+                            42,
+                            "apt-get update -y\n"
+                        ],
+                        [
+                            43,
+                            "apt-get install nginx -y\n"
+                        ],
+                        [
+                            44,
+                            "systemctl enable nginx\n"
+                        ],
+                        [
+                            45,
+                            "systemctl start nginx\n"
+                        ],
+                        [
+                            46,
+                            "echo \"<h1>Welcome from Akhilesh Terraform VM</h1>\" > /var/www/html/index.html\n"
+                        ],
+                        [
+                            47,
+                            "EOF\n"
+                        ],
+                        [
+                            48,
+                            "  )\n"
+                        ],
+                        [
+                            49,
+                            "\n"
+                        ],
+                        [
+                            50,
+                            "  tags = {\n"
+                        ],
+                        [
+                            51,
+                            "    environment = \"staging\"\n"
+                        ],
+                        [
+                            52,
+                            "  }\n"
+                        ],
+                        [
+                            53,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\VM\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf",
+                    "repo_file_path": "/Module/VM/main.tf",
+                    "file_line_range": [
+                        9,
+                        53
+                    ],
+                    "resource": "module.virtual_machine.azurerm_linux_virtual_machine.akhilesh_vm[\"vm1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.VMAgentIsInstalled",
+                    "fixed_definition": null,
+                    "entity_tags": {
+                        "environment": "staging"
+                    },
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        39,
+                        43
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/azr-general-179",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_92",
+                    "bc_check_id": "BC_AZR_GENERAL_66",
+                    "check_name": "Ensure that Virtual Machines use managed disks",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": []
+                    },
+                    "code_block": [
+                        [
+                            9,
+                            "resource \"azurerm_linux_virtual_machine\" \"akhilesh_vm\" {\n"
+                        ],
+                        [
+                            10,
+                            "  for_each = var.virtual_machine\n"
+                        ],
+                        [
+                            11,
+                            "\n"
+                        ],
+                        [
+                            12,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            13,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            14,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            15,
+                            "  size                = each.value.vm_size\n"
+                        ],
+                        [
+                            16,
+                            "\n"
+                        ],
+                        [
+                            17,
+                            "  network_interface_ids = [\n"
+                        ],
+                        [
+                            18,
+                            "    data.azurerm_network_interface.akhilesh_data.id\n"
+                        ],
+                        [
+                            19,
+                            "  ]\n"
+                        ],
+                        [
+                            20,
+                            "\n"
+                        ],
+                        [
+                            21,
+                            "  admin_username = \"testadmin\"\n"
+                        ],
+                        [
+                            22,
+                            "  admin_password = \"Pas**********\"\n"
+                        ],
+                        [
+                            23,
+                            "\n"
+                        ],
+                        [
+                            24,
+                            "  disable_password_authentication = false\n"
+                        ],
+                        [
+                            25,
+                            "\n"
+                        ],
+                        [
+                            26,
+                            "  os_disk {\n"
+                        ],
+                        [
+                            27,
+                            "    name                 = \"${each.value.name}-osdisk\"\n"
+                        ],
+                        [
+                            28,
+                            "    caching              = \"ReadWrite\"\n"
+                        ],
+                        [
+                            29,
+                            "    storage_account_type = \"Standard_LRS\"\n"
+                        ],
+                        [
+                            30,
+                            "  }\n"
+                        ],
+                        [
+                            31,
+                            "\n"
+                        ],
+                        [
+                            32,
+                            "  source_image_reference {\n"
+                        ],
+                        [
+                            33,
+                            "    publisher = \"Canonical\"\n"
+                        ],
+                        [
+                            34,
+                            "    offer     = \"0001-com-ubuntu-server-jammy\"\n"
+                        ],
+                        [
+                            35,
+                            "    sku       = \"22_04-lts\"\n"
+                        ],
+                        [
+                            36,
+                            "    version   = \"latest\"\n"
+                        ],
+                        [
+                            37,
+                            "  }\n"
+                        ],
+                        [
+                            38,
+                            "\n"
+                        ],
+                        [
+                            39,
+                            "  # \u00f0\u0178\u201d\u00a5 NGINX auto install\n"
+                        ],
+                        [
+                            40,
+                            "  custom_data = base64encode(<<EOF\n"
+                        ],
+                        [
+                            41,
+                            "#!/bin/bash\n"
+                        ],
+                        [
+                            42,
+                            "apt-get update -y\n"
+                        ],
+                        [
+                            43,
+                            "apt-get install nginx -y\n"
+                        ],
+                        [
+                            44,
+                            "systemctl enable nginx\n"
+                        ],
+                        [
+                            45,
+                            "systemctl start nginx\n"
+                        ],
+                        [
+                            46,
+                            "echo \"<h1>Welcome from Akhilesh Terraform VM</h1>\" > /var/www/html/index.html\n"
+                        ],
+                        [
+                            47,
+                            "EOF\n"
+                        ],
+                        [
+                            48,
+                            "  )\n"
+                        ],
+                        [
+                            49,
+                            "\n"
+                        ],
+                        [
+                            50,
+                            "  tags = {\n"
+                        ],
+                        [
+                            51,
+                            "    environment = \"staging\"\n"
+                        ],
+                        [
+                            52,
+                            "  }\n"
+                        ],
+                        [
+                            53,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\VM\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf",
+                    "repo_file_path": "/Module/VM/main.tf",
+                    "file_line_range": [
+                        9,
+                        53
+                    ],
+                    "resource": "module.virtual_machine.azurerm_linux_virtual_machine.akhilesh_vm[\"vm1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.VMStorageOsDisk",
+                    "fixed_definition": null,
+                    "entity_tags": {
+                        "environment": "staging"
+                    },
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        39,
+                        43
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/ensure-that-virtual-machines-use-managed-disks",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_183",
+                    "bc_check_id": "BC_AZR_NETWORKING_69",
+                    "check_name": "Ensure that VNET uses local DNS addresses",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": []
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_virtual_network\" \"akhilesh_vnet\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.virtual_networks\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  address_space       = each.value.address_space\n"
+                        ],
+                        [
+                            7,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Vnet\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Vnet\\main.tf",
+                    "repo_file_path": "/Module/Vnet/main.tf",
+                    "file_line_range": [
+                        1,
+                        7
+                    ],
+                    "resource": "module.virtual_networks.azurerm_virtual_network.akhilesh_vnet[\"Vnet1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.VnetLocalDNS",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        18,
+                        22
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/azr-networking-183",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Vnet\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_182",
+                    "bc_check_id": "BC_AZR_NETWORKING_68",
+                    "check_name": "Ensure that VNET has at least 2 connected DNS Endpoints",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": []
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_virtual_network\" \"akhilesh_vnet\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.virtual_networks\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  address_space       = each.value.address_space\n"
+                        ],
+                        [
+                            7,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Vnet\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Vnet\\main.tf",
+                    "repo_file_path": "/Module/Vnet/main.tf",
+                    "file_line_range": [
+                        1,
+                        7
+                    ],
+                    "resource": "module.virtual_networks.azurerm_virtual_network.akhilesh_vnet[\"Vnet1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.VnetSingleDNSServer",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        18,
+                        22
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/azr-networking-182",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Vnet\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_36",
+                    "bc_check_id": "BC_AZR_NETWORKING_16",
+                    "check_name": "Ensure 'Trusted Microsoft Services' is enabled for Storage Account access",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": []
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageAccountAzureServicesAccessEnabled",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/enable-trusted-microsoft-services-for-storage-account-access",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_43",
+                    "bc_check_id": "BC_AZR_STORAGE_3",
+                    "check_name": "Ensure Storage Accounts adhere to the naming rules",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "name"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageAccountName",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-storage-policies/ensure-storage-accounts-adhere-to-the-naming-rules",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_3",
+                    "bc_check_id": "BC_AZR_GENERAL_117",
+                    "check_name": "Ensure that 'enable_https_traffic_only' is enabled",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "enable_https_traffic_only"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageAccountsTransportEncryption",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/azr-general-3",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_244",
+                    "bc_check_id": "BC_AZR_GENERAL_148",
+                    "check_name": "Avoid the use of local users for Azure Storage unless necessary",
+                    "check_result": {
+                        "result": "PASSED",
+                        "evaluated_keys": [
+                            "local_user_enabled"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageLocalUsers",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/bc-azure-244",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_119",
+                    "bc_check_id": "BC_AZR_NETWORKING_36",
+                    "check_name": "Ensure that Network Interfaces don't use public IPs",
+                    "check_result": {
+                        "result": "PASSED",
+                        "entity": {
+                            "azurerm_network_interface": {
+                                "nic[\"nic1\"]": {
+                                    "__end_line__": 11,
+                                    "__start_line__": 1,
+                                    "ip_configuration": [
+                                        {
+                                            "name": [
+                                                "internal"
+                                            ],
+                                            "private_ip_address_allocation": [
+                                                "Dynamic"
+                                            ],
+                                            "subnet_id": [
+                                                "data.azurerm_subnet.datasubnetblock.id"
+                                            ]
+                                        }
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhilesh_nic"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.nic.azurerm_network_interface.nic[\"nic1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_network_interface\" \"nic\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each            = var.nic\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  ip_configuration {\n"
+                        ],
+                        [
+                            7,
+                            "    name                          = \"internal\"\n"
+                        ],
+                        [
+                            8,
+                            "    subnet_id                     = data.azurerm_subnet.datasubnetblock.id \n"
+                        ],
+                        [
+                            9,
+                            "    private_ip_address_allocation = \"Dynamic\"\n"
+                        ],
+                        [
+                            10,
+                            "  }\n"
+                        ],
+                        [
+                            11,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\NIC\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NIC\\main.tf",
+                    "repo_file_path": "/Module/NIC/main.tf",
+                    "file_line_range": [
+                        1,
+                        11
+                    ],
+                    "resource": "module.nic.azurerm_network_interface.nic[\"nic1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/ensure-that-network-interfaces-dont-use-public-ips",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NIC\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_8",
+                    "bc_check_id": "BC_AZR_LOGGING_12",
+                    "check_name": "Ensure the storage container storing the activity logs is not publicly accessible",
+                    "check_result": {
+                        "result": "PASSED",
+                        "entity": {
+                            "azurerm_storage_container": {
+                                "akhilesh_container[\"st1\"]": {
+                                    "__end_line__": 6,
+                                    "__start_line__": 1,
+                                    "container_access_type": [
+                                        "private"
+                                    ],
+                                    "name": [
+                                        "akhileshcontainer1"
+                                    ],
+                                    "storage_account_id": [
+                                        "data.azurerm_storage_account.akhilesh_storagedata.id"
+                                    ],
+                                    "__address__": "module.storage_containers.azurerm_storage_container.akhilesh_container[\"st1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type",
+                            "enabled",
+                            "container_access_type"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_container\" \"akhilesh_container\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_containers\n"
+                        ],
+                        [
+                            3,
+                            "  name                  = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  storage_account_id    = data.azurerm_storage_account.akhilesh_storagedata.id\n"
+                        ],
+                        [
+                            5,
+                            "  container_access_type = each.value.container_access_type\n"
+                        ],
+                        [
+                            6,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Conatiners\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Conatiners\\main.tf",
+                    "repo_file_path": "/Module/Conatiners/main.tf",
+                    "file_line_range": [
+                        1,
+                        6
+                    ],
+                    "resource": "module.storage_containers.azurerm_storage_container.akhilesh_container[\"st1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-logging-policies/ensure-the-storage-container-storing-the-activity-logs-is-not-publicly-accessible",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Conatiners\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_39",
+                    "bc_check_id": "BC_AZR_NETWORKING_83",
+                    "check_name": "Ensure Azure VM is not configured with public IP and serial console access",
+                    "check_result": {
+                        "result": "PASSED",
+                        "entity": {
+                            "azurerm_network_interface": {
+                                "nic[\"nic1\"]": {
+                                    "__end_line__": 11,
+                                    "__start_line__": 1,
+                                    "ip_configuration": [
+                                        {
+                                            "name": [
+                                                "internal"
+                                            ],
+                                            "private_ip_address_allocation": [
+                                                "Dynamic"
+                                            ],
+                                            "subnet_id": [
+                                                "data.azurerm_subnet.datasubnetblock.id"
+                                            ]
+                                        }
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhilesh_nic"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.nic.azurerm_network_interface.nic[\"nic1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type",
+                            "boot_diagnostics",
+                            "ip_configuration/public_ip_address_id"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_network_interface\" \"nic\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each            = var.nic\n"
+                        ],
+                        [
+                            3,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  ip_configuration {\n"
+                        ],
+                        [
+                            7,
+                            "    name                          = \"internal\"\n"
+                        ],
+                        [
+                            8,
+                            "    subnet_id                     = data.azurerm_subnet.datasubnetblock.id \n"
+                        ],
+                        [
+                            9,
+                            "    private_ip_address_allocation = \"Dynamic\"\n"
+                        ],
+                        [
+                            10,
+                            "  }\n"
+                        ],
+                        [
+                            11,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\NIC\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NIC\\main.tf",
+                    "repo_file_path": "/Module/NIC/main.tf",
+                    "file_line_range": [
+                        1,
+                        11
+                    ],
+                    "resource": "module.nic.azurerm_network_interface.nic[\"nic1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/bc-azure-2-39",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\NIC\\main.tf"
+                }
+            ],
+            "failed_checks": [
+                {
+                    "check_id": "CKV_AZURE_50",
+                    "bc_check_id": "BC_AZR_GENERAL_14",
+                    "check_name": "Ensure Virtual Machine Extensions are not Installed",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "allow_extension_operations"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            9,
+                            "resource \"azurerm_linux_virtual_machine\" \"akhilesh_vm\" {\n"
+                        ],
+                        [
+                            10,
+                            "  for_each = var.virtual_machine\n"
+                        ],
+                        [
+                            11,
+                            "\n"
+                        ],
+                        [
+                            12,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            13,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            14,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            15,
+                            "  size                = each.value.vm_size\n"
+                        ],
+                        [
+                            16,
+                            "\n"
+                        ],
+                        [
+                            17,
+                            "  network_interface_ids = [\n"
+                        ],
+                        [
+                            18,
+                            "    data.azurerm_network_interface.akhilesh_data.id\n"
+                        ],
+                        [
+                            19,
+                            "  ]\n"
+                        ],
+                        [
+                            20,
+                            "\n"
+                        ],
+                        [
+                            21,
+                            "  admin_username = \"testadmin\"\n"
+                        ],
+                        [
+                            22,
+                            "  admin_password = \"Pas**********\"\n"
+                        ],
+                        [
+                            23,
+                            "\n"
+                        ],
+                        [
+                            24,
+                            "  disable_password_authentication = false\n"
+                        ],
+                        [
+                            25,
+                            "\n"
+                        ],
+                        [
+                            26,
+                            "  os_disk {\n"
+                        ],
+                        [
+                            27,
+                            "    name                 = \"${each.value.name}-osdisk\"\n"
+                        ],
+                        [
+                            28,
+                            "    caching              = \"ReadWrite\"\n"
+                        ],
+                        [
+                            29,
+                            "    storage_account_type = \"Standard_LRS\"\n"
+                        ],
+                        [
+                            30,
+                            "  }\n"
+                        ],
+                        [
+                            31,
+                            "\n"
+                        ],
+                        [
+                            32,
+                            "  source_image_reference {\n"
+                        ],
+                        [
+                            33,
+                            "    publisher = \"Canonical\"\n"
+                        ],
+                        [
+                            34,
+                            "    offer     = \"0001-com-ubuntu-server-jammy\"\n"
+                        ],
+                        [
+                            35,
+                            "    sku       = \"22_04-lts\"\n"
+                        ],
+                        [
+                            36,
+                            "    version   = \"latest\"\n"
+                        ],
+                        [
+                            37,
+                            "  }\n"
+                        ],
+                        [
+                            38,
+                            "\n"
+                        ],
+                        [
+                            39,
+                            "  # \u00f0\u0178\u201d\u00a5 NGINX auto install\n"
+                        ],
+                        [
+                            40,
+                            "  custom_data = base64encode(<<EOF\n"
+                        ],
+                        [
+                            41,
+                            "#!/bin/bash\n"
+                        ],
+                        [
+                            42,
+                            "apt-get update -y\n"
+                        ],
+                        [
+                            43,
+                            "apt-get install nginx -y\n"
+                        ],
+                        [
+                            44,
+                            "systemctl enable nginx\n"
+                        ],
+                        [
+                            45,
+                            "systemctl start nginx\n"
+                        ],
+                        [
+                            46,
+                            "echo \"<h1>Welcome from Akhilesh Terraform VM</h1>\" > /var/www/html/index.html\n"
+                        ],
+                        [
+                            47,
+                            "EOF\n"
+                        ],
+                        [
+                            48,
+                            "  )\n"
+                        ],
+                        [
+                            49,
+                            "\n"
+                        ],
+                        [
+                            50,
+                            "  tags = {\n"
+                        ],
+                        [
+                            51,
+                            "    environment = \"staging\"\n"
+                        ],
+                        [
+                            52,
+                            "  }\n"
+                        ],
+                        [
+                            53,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\VM\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf",
+                    "repo_file_path": "/Module/VM/main.tf",
+                    "file_line_range": [
+                        9,
+                        53
+                    ],
+                    "resource": "module.virtual_machine.azurerm_linux_virtual_machine.akhilesh_vm[\"vm1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.AzureInstanceExtensions",
+                    "fixed_definition": null,
+                    "entity_tags": {
+                        "environment": "staging"
+                    },
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        39,
+                        43
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/bc-azr-general-14",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_1",
+                    "bc_check_id": "BC_AZR_NETWORKING_1",
+                    "check_name": "Ensure Azure Instance does not use basic authentication(Use SSH Key Instead)",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "disable_password_authentication"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            9,
+                            "resource \"azurerm_linux_virtual_machine\" \"akhilesh_vm\" {\n"
+                        ],
+                        [
+                            10,
+                            "  for_each = var.virtual_machine\n"
+                        ],
+                        [
+                            11,
+                            "\n"
+                        ],
+                        [
+                            12,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            13,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            14,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            15,
+                            "  size                = each.value.vm_size\n"
+                        ],
+                        [
+                            16,
+                            "\n"
+                        ],
+                        [
+                            17,
+                            "  network_interface_ids = [\n"
+                        ],
+                        [
+                            18,
+                            "    data.azurerm_network_interface.akhilesh_data.id\n"
+                        ],
+                        [
+                            19,
+                            "  ]\n"
+                        ],
+                        [
+                            20,
+                            "\n"
+                        ],
+                        [
+                            21,
+                            "  admin_username = \"testadmin\"\n"
+                        ],
+                        [
+                            22,
+                            "  admin_password = \"Pas**********\"\n"
+                        ],
+                        [
+                            23,
+                            "\n"
+                        ],
+                        [
+                            24,
+                            "  disable_password_authentication = false\n"
+                        ],
+                        [
+                            25,
+                            "\n"
+                        ],
+                        [
+                            26,
+                            "  os_disk {\n"
+                        ],
+                        [
+                            27,
+                            "    name                 = \"${each.value.name}-osdisk\"\n"
+                        ],
+                        [
+                            28,
+                            "    caching              = \"ReadWrite\"\n"
+                        ],
+                        [
+                            29,
+                            "    storage_account_type = \"Standard_LRS\"\n"
+                        ],
+                        [
+                            30,
+                            "  }\n"
+                        ],
+                        [
+                            31,
+                            "\n"
+                        ],
+                        [
+                            32,
+                            "  source_image_reference {\n"
+                        ],
+                        [
+                            33,
+                            "    publisher = \"Canonical\"\n"
+                        ],
+                        [
+                            34,
+                            "    offer     = \"0001-com-ubuntu-server-jammy\"\n"
+                        ],
+                        [
+                            35,
+                            "    sku       = \"22_04-lts\"\n"
+                        ],
+                        [
+                            36,
+                            "    version   = \"latest\"\n"
+                        ],
+                        [
+                            37,
+                            "  }\n"
+                        ],
+                        [
+                            38,
+                            "\n"
+                        ],
+                        [
+                            39,
+                            "  # \u00f0\u0178\u201d\u00a5 NGINX auto install\n"
+                        ],
+                        [
+                            40,
+                            "  custom_data = base64encode(<<EOF\n"
+                        ],
+                        [
+                            41,
+                            "#!/bin/bash\n"
+                        ],
+                        [
+                            42,
+                            "apt-get update -y\n"
+                        ],
+                        [
+                            43,
+                            "apt-get install nginx -y\n"
+                        ],
+                        [
+                            44,
+                            "systemctl enable nginx\n"
+                        ],
+                        [
+                            45,
+                            "systemctl start nginx\n"
+                        ],
+                        [
+                            46,
+                            "echo \"<h1>Welcome from Akhilesh Terraform VM</h1>\" > /var/www/html/index.html\n"
+                        ],
+                        [
+                            47,
+                            "EOF\n"
+                        ],
+                        [
+                            48,
+                            "  )\n"
+                        ],
+                        [
+                            49,
+                            "\n"
+                        ],
+                        [
+                            50,
+                            "  tags = {\n"
+                        ],
+                        [
+                            51,
+                            "    environment = \"staging\"\n"
+                        ],
+                        [
+                            52,
+                            "  }\n"
+                        ],
+                        [
+                            53,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\VM\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf",
+                    "repo_file_path": "/Module/VM/main.tf",
+                    "file_line_range": [
+                        9,
+                        53
+                    ],
+                    "resource": "module.virtual_machine.azurerm_linux_virtual_machine.akhilesh_vm[\"vm1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.AzureInstancePassword",
+                    "fixed_definition": null,
+                    "entity_tags": {
+                        "environment": "staging"
+                    },
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        39,
+                        43
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/bc-azr-networking-1",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_178",
+                    "bc_check_id": "BC_AZR_GENERAL_102",
+                    "check_name": "Ensure linux VM enables SSH with keys for secure communication",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "admin_ssh_key/[0]/public_key"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            9,
+                            "resource \"azurerm_linux_virtual_machine\" \"akhilesh_vm\" {\n"
+                        ],
+                        [
+                            10,
+                            "  for_each = var.virtual_machine\n"
+                        ],
+                        [
+                            11,
+                            "\n"
+                        ],
+                        [
+                            12,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            13,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            14,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            15,
+                            "  size                = each.value.vm_size\n"
+                        ],
+                        [
+                            16,
+                            "\n"
+                        ],
+                        [
+                            17,
+                            "  network_interface_ids = [\n"
+                        ],
+                        [
+                            18,
+                            "    data.azurerm_network_interface.akhilesh_data.id\n"
+                        ],
+                        [
+                            19,
+                            "  ]\n"
+                        ],
+                        [
+                            20,
+                            "\n"
+                        ],
+                        [
+                            21,
+                            "  admin_username = \"testadmin\"\n"
+                        ],
+                        [
+                            22,
+                            "  admin_password = \"Pas**********\"\n"
+                        ],
+                        [
+                            23,
+                            "\n"
+                        ],
+                        [
+                            24,
+                            "  disable_password_authentication = false\n"
+                        ],
+                        [
+                            25,
+                            "\n"
+                        ],
+                        [
+                            26,
+                            "  os_disk {\n"
+                        ],
+                        [
+                            27,
+                            "    name                 = \"${each.value.name}-osdisk\"\n"
+                        ],
+                        [
+                            28,
+                            "    caching              = \"ReadWrite\"\n"
+                        ],
+                        [
+                            29,
+                            "    storage_account_type = \"Standard_LRS\"\n"
+                        ],
+                        [
+                            30,
+                            "  }\n"
+                        ],
+                        [
+                            31,
+                            "\n"
+                        ],
+                        [
+                            32,
+                            "  source_image_reference {\n"
+                        ],
+                        [
+                            33,
+                            "    publisher = \"Canonical\"\n"
+                        ],
+                        [
+                            34,
+                            "    offer     = \"0001-com-ubuntu-server-jammy\"\n"
+                        ],
+                        [
+                            35,
+                            "    sku       = \"22_04-lts\"\n"
+                        ],
+                        [
+                            36,
+                            "    version   = \"latest\"\n"
+                        ],
+                        [
+                            37,
+                            "  }\n"
+                        ],
+                        [
+                            38,
+                            "\n"
+                        ],
+                        [
+                            39,
+                            "  # \u00f0\u0178\u201d\u00a5 NGINX auto install\n"
+                        ],
+                        [
+                            40,
+                            "  custom_data = base64encode(<<EOF\n"
+                        ],
+                        [
+                            41,
+                            "#!/bin/bash\n"
+                        ],
+                        [
+                            42,
+                            "apt-get update -y\n"
+                        ],
+                        [
+                            43,
+                            "apt-get install nginx -y\n"
+                        ],
+                        [
+                            44,
+                            "systemctl enable nginx\n"
+                        ],
+                        [
+                            45,
+                            "systemctl start nginx\n"
+                        ],
+                        [
+                            46,
+                            "echo \"<h1>Welcome from Akhilesh Terraform VM</h1>\" > /var/www/html/index.html\n"
+                        ],
+                        [
+                            47,
+                            "EOF\n"
+                        ],
+                        [
+                            48,
+                            "  )\n"
+                        ],
+                        [
+                            49,
+                            "\n"
+                        ],
+                        [
+                            50,
+                            "  tags = {\n"
+                        ],
+                        [
+                            51,
+                            "    environment = \"staging\"\n"
+                        ],
+                        [
+                            52,
+                            "  }\n"
+                        ],
+                        [
+                            53,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\VM\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf",
+                    "repo_file_path": "/Module/VM/main.tf",
+                    "file_line_range": [
+                        9,
+                        53
+                    ],
+                    "resource": "module.virtual_machine.azurerm_linux_virtual_machine.akhilesh_vm[\"vm1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.LinuxVMUsesSSH",
+                    "fixed_definition": null,
+                    "entity_tags": {
+                        "environment": "staging"
+                    },
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        39,
+                        43
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/azr-general-178",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_149",
+                    "bc_check_id": "BC_AZR_GENERAL_84",
+                    "check_name": "Ensure that Virtual machine does not enable password authentication",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "disable_password_authentication"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            9,
+                            "resource \"azurerm_linux_virtual_machine\" \"akhilesh_vm\" {\n"
+                        ],
+                        [
+                            10,
+                            "  for_each = var.virtual_machine\n"
+                        ],
+                        [
+                            11,
+                            "\n"
+                        ],
+                        [
+                            12,
+                            "  name                = each.value.name\n"
+                        ],
+                        [
+                            13,
+                            "  location            = each.value.location\n"
+                        ],
+                        [
+                            14,
+                            "  resource_group_name = each.value.resource_group_name\n"
+                        ],
+                        [
+                            15,
+                            "  size                = each.value.vm_size\n"
+                        ],
+                        [
+                            16,
+                            "\n"
+                        ],
+                        [
+                            17,
+                            "  network_interface_ids = [\n"
+                        ],
+                        [
+                            18,
+                            "    data.azurerm_network_interface.akhilesh_data.id\n"
+                        ],
+                        [
+                            19,
+                            "  ]\n"
+                        ],
+                        [
+                            20,
+                            "\n"
+                        ],
+                        [
+                            21,
+                            "  admin_username = \"testadmin\"\n"
+                        ],
+                        [
+                            22,
+                            "  admin_password = \"Pas**********\"\n"
+                        ],
+                        [
+                            23,
+                            "\n"
+                        ],
+                        [
+                            24,
+                            "  disable_password_authentication = false\n"
+                        ],
+                        [
+                            25,
+                            "\n"
+                        ],
+                        [
+                            26,
+                            "  os_disk {\n"
+                        ],
+                        [
+                            27,
+                            "    name                 = \"${each.value.name}-osdisk\"\n"
+                        ],
+                        [
+                            28,
+                            "    caching              = \"ReadWrite\"\n"
+                        ],
+                        [
+                            29,
+                            "    storage_account_type = \"Standard_LRS\"\n"
+                        ],
+                        [
+                            30,
+                            "  }\n"
+                        ],
+                        [
+                            31,
+                            "\n"
+                        ],
+                        [
+                            32,
+                            "  source_image_reference {\n"
+                        ],
+                        [
+                            33,
+                            "    publisher = \"Canonical\"\n"
+                        ],
+                        [
+                            34,
+                            "    offer     = \"0001-com-ubuntu-server-jammy\"\n"
+                        ],
+                        [
+                            35,
+                            "    sku       = \"22_04-lts\"\n"
+                        ],
+                        [
+                            36,
+                            "    version   = \"latest\"\n"
+                        ],
+                        [
+                            37,
+                            "  }\n"
+                        ],
+                        [
+                            38,
+                            "\n"
+                        ],
+                        [
+                            39,
+                            "  # \u00f0\u0178\u201d\u00a5 NGINX auto install\n"
+                        ],
+                        [
+                            40,
+                            "  custom_data = base64encode(<<EOF\n"
+                        ],
+                        [
+                            41,
+                            "#!/bin/bash\n"
+                        ],
+                        [
+                            42,
+                            "apt-get update -y\n"
+                        ],
+                        [
+                            43,
+                            "apt-get install nginx -y\n"
+                        ],
+                        [
+                            44,
+                            "systemctl enable nginx\n"
+                        ],
+                        [
+                            45,
+                            "systemctl start nginx\n"
+                        ],
+                        [
+                            46,
+                            "echo \"<h1>Welcome from Akhilesh Terraform VM</h1>\" > /var/www/html/index.html\n"
+                        ],
+                        [
+                            47,
+                            "EOF\n"
+                        ],
+                        [
+                            48,
+                            "  )\n"
+                        ],
+                        [
+                            49,
+                            "\n"
+                        ],
+                        [
+                            50,
+                            "  tags = {\n"
+                        ],
+                        [
+                            51,
+                            "    environment = \"staging\"\n"
+                        ],
+                        [
+                            52,
+                            "  }\n"
+                        ],
+                        [
+                            53,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\VM\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf",
+                    "repo_file_path": "/Module/VM/main.tf",
+                    "file_line_range": [
+                        9,
+                        53
+                    ],
+                    "resource": "module.virtual_machine.azurerm_linux_virtual_machine.akhilesh_vm[\"vm1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.VMDisablePasswordAuthentication",
+                    "fixed_definition": null,
+                    "entity_tags": {
+                        "environment": "staging"
+                    },
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        39,
+                        43
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/ensure-azure-virtual-machine-does-not-enable-password-authentication",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\VM\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_59",
+                    "bc_check_id": "BC_AZR_NETWORKING_18",
+                    "check_name": "Ensure that Storage accounts disallow public access",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "public_network_access_enabled"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageAccountDisablePublicAccess",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/ensure-that-storage-accounts-disallow-public-access",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_33",
+                    "bc_check_id": "BC_AZR_LOGGING_4",
+                    "check_name": "Ensure Storage logging is enabled for Queue service for read, write and delete requests",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "account_kind"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageAccountLoggingQueueServiceEnabled",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-logging-policies/enable-requests-on-storage-logging-for-queue-service",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_44",
+                    "bc_check_id": "BC_AZR_STORAGE_2",
+                    "check_name": "Ensure Storage Account is using the latest version of TLS encryption",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "min_tls_version"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageAccountMinimumTlsVersion",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-storage-policies/bc-azr-storage-2",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_206",
+                    "bc_check_id": "BC_AZR_GENERAL_111",
+                    "check_name": "Ensure that Storage Accounts use replication",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "account_replication_type"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageAccountsUseReplication",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/azr-general-206",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV_AZURE_190",
+                    "bc_check_id": "BC_AZR_NETWORKING_72",
+                    "check_name": "Ensure that Storage blobs restrict public access",
+                    "check_result": {
+                        "result": "FAILED",
+                        "evaluated_keys": [
+                            "allow_nested_items_to_be_public"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.terraform.checks.resource.azure.StorageBlobRestrictPublicAccess",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": "\\main.tf",
+                    "caller_file_line_range": [
+                        6,
+                        12
+                    ],
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-networking-policies/azr-networking-190",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_40",
+                    "bc_check_id": "BC_AZR_IAM_20",
+                    "check_name": "Ensure storage account is not configured with Shared Key authorization",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_storage_account": {
+                                "akhilesh_storage[\"St1\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 1,
+                                    "account_replication_type": [
+                                        "LRS"
+                                    ],
+                                    "account_tier": [
+                                        "Standard"
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhileshstorage1"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "shared_access_key_enabled"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-iam-policies/bc-azure-2-40",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_47",
+                    "bc_check_id": "BC_AZR_IAM_22",
+                    "check_name": "Ensure storage account is configured without blob anonymous access",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_storage_account": {
+                                "akhilesh_storage[\"St1\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 1,
+                                    "account_replication_type": [
+                                        "LRS"
+                                    ],
+                                    "account_tier": [
+                                        "Standard"
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhileshstorage1"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "allow_nested_items_to_be_public"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-iam-policies/bc-azure-2-47",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_33",
+                    "bc_check_id": "BC_AZR_GENERAL_126",
+                    "check_name": "Ensure storage account is configured with private endpoint",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_storage_account": {
+                                "akhilesh_storage[\"St1\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 1,
+                                    "account_replication_type": [
+                                        "LRS"
+                                    ],
+                                    "account_tier": [
+                                        "Standard"
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhileshstorage1"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/bc-azure-2-33",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_41",
+                    "bc_check_id": "BC_AZR_IAM_21",
+                    "check_name": "Ensure storage account is configured with SAS expiration policy",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_storage_account": {
+                                "akhilesh_storage[\"St1\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 1,
+                                    "account_replication_type": [
+                                        "LRS"
+                                    ],
+                                    "account_tier": [
+                                        "Standard"
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhileshstorage1"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "sas_policy",
+                            "shared_access_key_enabled",
+                            "sas_policy/expiration_period"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-iam-policies/bc-azure-2-41",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_38",
+                    "bc_check_id": "BC_AZR_GENERAL_128",
+                    "check_name": "Ensure soft-delete is enabled on Azure storage account",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_storage_account": {
+                                "akhilesh_storage[\"St1\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 1,
+                                    "account_replication_type": [
+                                        "LRS"
+                                    ],
+                                    "account_tier": [
+                                        "Standard"
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhileshstorage1"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "account_kind",
+                            "blob_properties/delete_retention_policy",
+                            "blob_properties/delete_retention_policy/days"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/bc-azure-2-38",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_21",
+                    "bc_check_id": "BC_AZR_LOGGING_11",
+                    "check_name": "Ensure Storage logging is enabled for Blob service for read requests",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_storage_container": {
+                                "akhilesh_container[\"st1\"]": {
+                                    "__end_line__": 6,
+                                    "__start_line__": 1,
+                                    "container_access_type": [
+                                        "private"
+                                    ],
+                                    "name": [
+                                        "akhileshcontainer1"
+                                    ],
+                                    "storage_account_id": [
+                                        "data.azurerm_storage_account.akhilesh_storagedata.id"
+                                    ],
+                                    "__address__": "module.storage_containers.azurerm_storage_container.akhilesh_container[\"st1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "blob_container_names",
+                            "resource_type",
+                            "container_access_type"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_container\" \"akhilesh_container\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_containers\n"
+                        ],
+                        [
+                            3,
+                            "  name                  = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  storage_account_id    = data.azurerm_storage_account.akhilesh_storagedata.id\n"
+                        ],
+                        [
+                            5,
+                            "  container_access_type = each.value.container_access_type\n"
+                        ],
+                        [
+                            6,
+                            "}\n"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Conatiners\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Conatiners\\main.tf",
+                    "repo_file_path": "/Module/Conatiners/main.tf",
+                    "file_line_range": [
+                        1,
+                        6
+                    ],
+                    "resource": "module.storage_containers.azurerm_storage_container.akhilesh_container[\"st1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-logging-policies/ensure-storage-logging-is-enabled-for-blob-service-for-read-requests",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Conatiners\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_1",
+                    "bc_check_id": "BC_AZR_GENERAL_32",
+                    "check_name": "Ensure storage for critical data are encrypted with Customer Managed Key",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_storage_account": {
+                                "akhilesh_storage[\"St1\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 1,
+                                    "account_replication_type": [
+                                        "LRS"
+                                    ],
+                                    "account_tier": [
+                                        "Standard"
+                                    ],
+                                    "location": [
+                                        "japan east"
+                                    ],
+                                    "name": [
+                                        "akhileshstorage1"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "__address__": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type",
+                            "customer_managed_key/key_vault_key_id"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            1,
+                            "resource \"azurerm_storage_account\" \"akhilesh_storage\" {\n"
+                        ],
+                        [
+                            2,
+                            "  for_each = var.storage_accounts\n"
+                        ],
+                        [
+                            3,
+                            "  name                     = each.value.name\n"
+                        ],
+                        [
+                            4,
+                            "  location                 = each.value.location\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name      = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  account_tier             = \"Standard\"\n"
+                        ],
+                        [
+                            7,
+                            "  account_replication_type = \"LRS\"\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\storage\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf",
+                    "repo_file_path": "/Module/storage/main.tf",
+                    "file_line_range": [
+                        1,
+                        8
+                    ],
+                    "resource": "module.storage.azurerm_storage_account.akhilesh_storage[\"St1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/ensure-storage-for-critical-data-are-encrypted-with-customer-managed-key",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\storage\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_31",
+                    "bc_check_id": "BC_AZR_GENERAL_124",
+                    "check_name": "Ensure VNET subnet is configured with a Network Security Group (NSG)",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_subnet": {
+                                "subnet1[\"subnet1\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 2,
+                                    "address_prefixes": [
+                                        "10.0.1.0/24"
+                                    ],
+                                    "name": [
+                                        "akhilesh_backend_subnet"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "virtual_network_name": [
+                                        "akhilesh_vnet"
+                                    ],
+                                    "__address__": "module.subnet.azurerm_subnet.subnet1[\"subnet1\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type",
+                            "delegation/service_delegation/name",
+                            "name"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            2,
+                            "resource \"azurerm_subnet\" \"subnet1\" {\n"
+                        ],
+                        [
+                            3,
+                            "  for_each             = var.subnet\n"
+                        ],
+                        [
+                            4,
+                            "  name                 = each.value.name\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name  = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  virtual_network_name = each.value.virtual_network_name\n"
+                        ],
+                        [
+                            7,
+                            "  address_prefixes     = each.value.address_prefixes\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Subnet\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Subnet\\main.tf",
+                    "repo_file_path": "/Module/Subnet/main.tf",
+                    "file_line_range": [
+                        2,
+                        8
+                    ],
+                    "resource": "module.subnet.azurerm_subnet.subnet1[\"subnet1\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/bc-azure-2-31",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Subnet\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_31",
+                    "bc_check_id": "BC_AZR_GENERAL_124",
+                    "check_name": "Ensure VNET subnet is configured with a Network Security Group (NSG)",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_subnet": {
+                                "subnet1[\"subnet2\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 2,
+                                    "address_prefixes": [
+                                        "10.0.2.0/24"
+                                    ],
+                                    "name": [
+                                        "akhilesh_frontend_subnet"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "virtual_network_name": [
+                                        "akhilesh_vnet"
+                                    ],
+                                    "__address__": "module.subnet.azurerm_subnet.subnet1[\"subnet2\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type",
+                            "delegation/service_delegation/name",
+                            "name"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            2,
+                            "resource \"azurerm_subnet\" \"subnet1\" {\n"
+                        ],
+                        [
+                            3,
+                            "  for_each             = var.subnet\n"
+                        ],
+                        [
+                            4,
+                            "  name                 = each.value.name\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name  = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  virtual_network_name = each.value.virtual_network_name\n"
+                        ],
+                        [
+                            7,
+                            "  address_prefixes     = each.value.address_prefixes\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Subnet\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Subnet\\main.tf",
+                    "repo_file_path": "/Module/Subnet/main.tf",
+                    "file_line_range": [
+                        2,
+                        8
+                    ],
+                    "resource": "module.subnet.azurerm_subnet.subnet1[\"subnet2\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/bc-azure-2-31",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Subnet\\main.tf"
+                },
+                {
+                    "check_id": "CKV2_AZURE_31",
+                    "bc_check_id": "BC_AZR_GENERAL_124",
+                    "check_name": "Ensure VNET subnet is configured with a Network Security Group (NSG)",
+                    "check_result": {
+                        "result": "FAILED",
+                        "entity": {
+                            "azurerm_subnet": {
+                                "subnet1[\"subnet3\"]": {
+                                    "__end_line__": 8,
+                                    "__start_line__": 2,
+                                    "address_prefixes": [
+                                        "10.0.3.0/26"
+                                    ],
+                                    "name": [
+                                        "AzureBastionSubnet"
+                                    ],
+                                    "resource_group_name": [
+                                        "akhilesh_RG"
+                                    ],
+                                    "virtual_network_name": [
+                                        "akhilesh_vnet"
+                                    ],
+                                    "__address__": "module.subnet.azurerm_subnet.subnet1[\"subnet3\"]"
+                                }
+                            }
+                        },
+                        "evaluated_keys": [
+                            "resource_type",
+                            "delegation/service_delegation/name",
+                            "name"
+                        ]
+                    },
+                    "code_block": [
+                        [
+                            2,
+                            "resource \"azurerm_subnet\" \"subnet1\" {\n"
+                        ],
+                        [
+                            3,
+                            "  for_each             = var.subnet\n"
+                        ],
+                        [
+                            4,
+                            "  name                 = each.value.name\n"
+                        ],
+                        [
+                            5,
+                            "  resource_group_name  = each.value.resource_group_name\n"
+                        ],
+                        [
+                            6,
+                            "  virtual_network_name = each.value.virtual_network_name\n"
+                        ],
+                        [
+                            7,
+                            "  address_prefixes     = each.value.address_prefixes\n"
+                        ],
+                        [
+                            8,
+                            "}"
+                        ]
+                    ],
+                    "file_path": "\\..\\..\\Module\\Subnet\\main.tf",
+                    "file_abs_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Subnet\\main.tf",
+                    "repo_file_path": "/Module/Subnet/main.tf",
+                    "file_line_range": [
+                        2,
+                        8
+                    ],
+                    "resource": "module.subnet.azurerm_subnet.subnet1[\"subnet3\"]",
+                    "evaluations": null,
+                    "check_class": "checkov.common.graph.checks_infra.base_check",
+                    "fixed_definition": null,
+                    "entity_tags": null,
+                    "caller_file_path": null,
+                    "caller_file_line_range": null,
+                    "resource_address": null,
+                    "severity": null,
+                    "bc_category": null,
+                    "benchmarks": null,
+                    "description": null,
+                    "short_description": null,
+                    "vulnerability_details": null,
+                    "connected_node": null,
+                    "guideline": "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/azure-policies/azure-general-policies/bc-azure-2-31",
+                    "details": [],
+                    "check_len": null,
+                    "definition_context_file_path": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Module\\Subnet\\main.tf"
+                }
+            ],
+            "skipped_checks": [],
+            "parsing_errors": []
+        },
+        "summary": {
+            "passed": 17,
+            "failed": 19,
+            "skipped": 0,
+            "parsing_errors": 0,
+            "resource_count": 14,
+            "checkov_version": "3.3.8"
+        },
+        "url": "Add an api key '--bc-api-key <api-key>' to see more detailed insights via https://bridgecrew.cloud"
+    },
+    {
+        "check_type": "terraform_plan",
+        "results": {
+            "passed_checks": [],
+            "failed_checks": [],
+            "skipped_checks": [],
+            "parsing_errors": [
+                ".\\reports\\checkov.json"
+            ]
+        },
+        "summary": {
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0,
+            "parsing_errors": 1,
+            "resource_count": 0,
+            "checkov_version": "3.3.8"
+        },
+        "url": "Add an api key '--bc-api-key <api-key>' to see more detailed insights via https://bridgecrew.cloud"
+    }
+]

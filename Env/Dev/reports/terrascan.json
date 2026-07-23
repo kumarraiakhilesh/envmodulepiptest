@@ -1,0 +1,123 @@
+{
+  "results": {
+    "scan_errors": [
+      {
+        "iac_type": "docker",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev",
+        "errMsg": "Dockerfile not found in the directory E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev"
+      },
+      {
+        "iac_type": "terraform",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "directory 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports' has no terraform config files"
+      },
+      {
+        "iac_type": "cft",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\.terraform\\modules",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\.terraform\\modules\\modules.json', err: failed to find valid Resources key in file: E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\.terraform\\modules\\modules.json"
+      },
+      {
+        "iac_type": "cft",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\.terraform\\providers\\registry.terraform.io\\hashicorp\\azurerm\\4.80.0\\windows_amd64",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\.terraform\\providers\\registry.terraform.io\\hashicorp\\azurerm\\4.80.0\\windows_amd64\\LICENSE.txt', err: unsupported extension for file E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\.terraform\\providers\\registry.terraform.io\\hashicorp\\azurerm\\4.80.0\\windows_amd64\\LICENSE.txt"
+      },
+      {
+        "iac_type": "cft",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\checkov.json', err: json: cannot unmarshal array into Go value of type map[string]interface {}"
+      },
+      {
+        "iac_type": "arm",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\checkov.json'. err: unable to parse file E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\checkov.json"
+      },
+      {
+        "iac_type": "cft",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\terraform_fmt.txt', err: unsupported extension for file E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\terraform_fmt.txt"
+      },
+      {
+        "iac_type": "cft",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\terraform_validate.txt', err: unsupported extension for file E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\terraform_validate.txt"
+      },
+      {
+        "iac_type": "cft",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\terrascan.json', err: error while resolving intrinsic functions, error invalid JSON: unexpected end of JSON input"
+      },
+      {
+        "iac_type": "arm",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\terrascan.json'. err: unable to parse file E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\terrascan.json"
+      },
+      {
+        "iac_type": "cft",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports",
+        "errMsg": "error while loading iac file 'E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\tflint.json', err: failed to find valid Resources key in file: E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev\\reports\\tflint.json"
+      },
+      {
+        "iac_type": "kustomize",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev",
+        "errMsg": "kustomization.y(a)ml file not found in the directory E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev"
+      },
+      {
+        "iac_type": "helm",
+        "directory": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev",
+        "errMsg": "no helm charts found in directory E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev"
+      }
+    ],
+    "violations": [
+      {
+        "rule_name": "reme_checkStorageContainerAccess",
+        "description": "Anonymous, public read access to a container and its blobs can be enabled in Azure Blob storage. This is only recommended if absolutely necessary.",
+        "rule_id": "AC_AZURE_0366",
+        "severity": "HIGH",
+        "category": "Identity and Access Management",
+        "resource_name": "akhilesh_container",
+        "resource_type": "azurerm_storage_container",
+        "module_name": "storage_containers",
+        "file": "..\\..\\Module\\Conatiners\\main.tf",
+        "plan_root": ".\\",
+        "line": 1
+      },
+      {
+        "rule_name": "reme_noSecurityGroupAssociated",
+        "description": "Ensure that Azure Virtual Network subnet is configured with a Network Security Group",
+        "rule_id": "AC_AZURE_0356",
+        "severity": "MEDIUM",
+        "category": "Infrastructure Security",
+        "resource_name": "subnet1",
+        "resource_type": "azurerm_subnet",
+        "module_name": "subnet",
+        "file": "..\\..\\Module\\Subnet\\main.tf",
+        "plan_root": ".\\",
+        "line": 2
+      },
+      {
+        "rule_name": "reme_resourceGroupLock",
+        "description": "Ensure that Azure Resource Group has resource lock enabled",
+        "rule_id": "AC_AZURE_0389",
+        "severity": "LOW",
+        "category": "Identity and Access Management",
+        "resource_name": "akhilesh_RG",
+        "resource_type": "azurerm_resource_group",
+        "module_name": "rg",
+        "file": "..\\..\\Module\\RG\\main.tf",
+        "plan_root": ".\\",
+        "line": 1
+      }
+    ],
+    "skipped_violations": null,
+    "scan_summary": {
+      "file/folder": "E:\\DEVOPS\\teraform\\July\\13july_datablock\\Env\\Dev",
+      "iac_type": "terraform",
+      "scanned_at": "2026-07-23 16:28:18.6631104 +0000 UTC",
+      "policies_validated": 6,
+      "violated_policies": 3,
+      "low": 1,
+      "medium": 1,
+      "high": 1
+    }
+  }
+}
