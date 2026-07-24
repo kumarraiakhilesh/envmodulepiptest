@@ -1,7 +1,7 @@
 trigger: none
 
 pool:
-  name: stayndra
+  name: akhileshpool
 
 variables:
   terraformVersion: '1.15.6'
