@@ -1,178 +1,286 @@
 trigger: none
 
+
 pool:
-  vmImage: ubuntu-latest
+  name: akhileshagent
 
 
 variables:
+
   terraformVersion: '1.15.6'
+
 
 
 stages:
 
+
 - stage: Terraform_Deployment
+
   displayName: Terraform Dev and Prod Deployment
+
 
 
   jobs:
 
 
+
   # ======================
-  # DEV DEPLOYMENT
+  # DEV
   # ======================
 
+
   - job: DEV
-    displayName: Terraform DEV
+
+    displayName: Terraform DEV Deployment
 
 
     variables:
+
       terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infra/dev'
+
 
 
     steps:
 
 
+
     - task: TerraformInstaller@1
+
       displayName: Install Terraform
+
       inputs:
+
         terraformVersion: $(terraformVersion)
 
 
 
+
     - script: |
+
         terraform fmt -check -recursive
-      displayName: Terraform Format
+
+      displayName: Terraform Format Check
+
+
 
 
 
     - task: TerraformTask@5
+
       displayName: Terraform Init DEV
+
       inputs:
+
         provider: azurerm
+
         command: init
+
         workingDirectory: $(terraformWorkingDirectory)
 
-        backendServiceArm: Azure-Service-Connection-DEV
-        backendAzureRmResourceGroupName: g2-dev
-        backendAzureRmStorageAccountName: g2devstorage
-        backendAzureRmContainerName: tfstate
-        backendAzureRmKey: dev.tfstate
+
+        backendServiceArm: akhileshserviveconnection
+
+        backendAzureRmResourceGroupName: akhileshtestpip
+
+        backendAzureRmStorageAccountName: akhileshstoragepipi
+
+        backendAzureRmContainerName: akhileshcanttest
+
+        backendAzureRmKey: pipe.tfstate
+
+
 
 
 
     - task: TerraformTask@5
+
       displayName: Terraform Validate DEV
+
       inputs:
+
         provider: azurerm
+
         command: validate
+
         workingDirectory: $(terraformWorkingDirectory)
+
+
 
 
 
     - task: TerraformTask@5
+
       displayName: Terraform Plan DEV
+
       inputs:
+
         provider: azurerm
+
         command: plan
+
         workingDirectory: $(terraformWorkingDirectory)
-        environmentServiceNameAzureRM: Azure-Service-Connection-DEV
+
+        environmentServiceNameAzureRM: akhileshserviveconnection
+
         commandOptions: '-out=tfplan'
 
 
 
+
+
     - task: TerraformTask@5
+
       displayName: Terraform Apply DEV
+
       inputs:
+
         provider: azurerm
+
         command: apply
+
         workingDirectory: $(terraformWorkingDirectory)
-        environmentServiceNameAzureRM: Azure-Service-Connection-DEV
+
+        environmentServiceNameAzureRM: akhileshserviveconnection
+
         commandOptions: 'tfplan'
 
 
 
 
 
+
+
   # ======================
-  # PROD DEPLOYMENT
+  # PROD
   # ======================
 
+
   - job: PROD
-    displayName: Terraform PROD
+
+    displayName: Terraform PROD Deployment
+
 
     dependsOn: DEV
 
 
+
     variables:
+
       terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infra/prod'
+
 
 
     steps:
 
 
+
     - task: TerraformInstaller@1
+
       displayName: Install Terraform
+
       inputs:
+
         terraformVersion: $(terraformVersion)
 
 
 
-    - script: |
-        terraform fmt -check -recursive
-      displayName: Terraform Format
-
 
 
     - task: TerraformTask@5
+
       displayName: Terraform Init PROD
+
       inputs:
+
         provider: azurerm
+
         command: init
+
         workingDirectory: $(terraformWorkingDirectory)
 
-        backendServiceArm: Azure-Service-Connection-PROD
-        backendAzureRmResourceGroupName: g2-prod
-        backendAzureRmStorageAccountName: g2prodstorage
-        backendAzureRmContainerName: tfstate
+
+        backendServiceArm: akhileshserviveconnection
+
+        backendAzureRmResourceGroupName: akhileshtestpip
+
+        backendAzureRmStorageAccountName: akhileshstoragepipi
+
+        backendAzureRmContainerName: akhileshcanttest
+
         backendAzureRmKey: prod.tfstate
 
 
 
+
+
+
     - task: TerraformTask@5
+
       displayName: Terraform Validate PROD
+
       inputs:
+
         provider: azurerm
+
         command: validate
+
         workingDirectory: $(terraformWorkingDirectory)
+
+
+
 
 
 
     - task: TerraformTask@5
+
       displayName: Terraform Plan PROD
+
       inputs:
+
         provider: azurerm
+
         command: plan
+
         workingDirectory: $(terraformWorkingDirectory)
-        environmentServiceNameAzureRM: Azure-Service-Connection-PROD
+
+        environmentServiceNameAzureRM: akhileshserviveconnection
+
         commandOptions: '-out=tfplan'
 
 
 
+
+
+
     - task: ManualValidation@0
-      displayName: Production Approval
+
+      displayName: PROD Approval
+
       inputs:
+
         notifyUsers: |
           admin@company.com
+
         instructions: |
-          Approve Terraform Production Deployment
+          Review Terraform Plan and Approve Production Deployment
+
+
+
 
 
 
     - task: TerraformTask@5
+
       displayName: Terraform Apply PROD
+
       inputs:
+
         provider: azurerm
+
         command: apply
+
         workingDirectory: $(terraformWorkingDirectory)
-        environmentServiceNameAzureRM: Azure-Service-Connection-PROD
+
+        environmentServiceNameAzureRM: akhileshserviveconnection
+
         commandOptions: 'tfplan'
