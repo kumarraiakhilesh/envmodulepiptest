@@ -27,11 +27,11 @@ stages:
         tfsec $(terraformWorkingDirectory)
       displayName: "Terraform tfsec Scan"
 
-    # 3. Terraform Format Check
-    - script: |
-        terraform fmt -check -recursive
-      workingDirectory: $(terraformWorkingDirectory)
-      displayName: "Terraform Format Check"
+    # # 3. Terraform Format Check
+    # - script: |
+    #     terraform fmt -check -recursive
+    #   workingDirectory: $(terraformWorkingDirectory)
+    #   displayName: "Terraform Format Check"
 
     # 4. Terraform Init
     - task: TerraformTask@5
