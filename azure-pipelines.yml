@@ -9,27 +9,31 @@ variables:
 
 stages:
 - stage: DEV
-  displayName: "Terraform DEV Deployment"
+  displayName: "Terraform DEV Plan & Publish"
   jobs:
-  - job: Terraform_DEV
-    displayName: "Terraform DEV Apply"
+  - job: Terraform_DEV_Plan
+    displayName: "Terraform DEV Plan"
     steps:
 
+    # 1. Install Terraform
     - task: TerraformInstaller@1
       displayName: "Install Terraform"
       inputs:
         terraformVersion: $(terraformVersion)
 
+    # 2. Terraform Security Scan (tfsec)
     - script: |
         curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
         tfsec $(terraformWorkingDirectory)
       displayName: "Terraform tfsec Scan"
 
+    # 3. Terraform Format Check
     - script: |
         terraform fmt -check -recursive
       workingDirectory: $(terraformWorkingDirectory)
       displayName: "Terraform Format Check"
 
+    # 4. Terraform Init
     - task: TerraformTask@5
       displayName: "Terraform Init DEV"
       inputs:
@@ -42,6 +46,7 @@ stages:
         backendAzureRmContainerName: 'akhileshcanttest'
         backendAzureRmKey: 'dev.tfstate'
 
+    # 5. Terraform Validate
     - task: TerraformTask@5
       displayName: "Terraform Validate DEV"
       inputs:
@@ -49,6 +54,7 @@ stages:
         command: 'validate'
         workingDirectory: $(terraformWorkingDirectory)
 
+    # 6. Terraform Plan (Saves the execution plan to tfplan)
     - task: TerraformTask@5
       displayName: "Terraform Plan DEV"
       inputs:
@@ -58,11 +64,10 @@ stages:
         environmentServiceNameAzureRM: 'akhileshserviveconnection'
         commandOptions: '-out=tfplan'
 
-    - task: TerraformTask@5
-      displayName: "Terraform Apply DEV AUTO APPROVE"
+    # 7. Publish Terraform Plan (tfplan) as a Pipeline Artifact
+    - task: PublishPipelineArtifact@1
+      displayName: "Publish Terraform Plan Artifact"
       inputs:
-        provider: 'azurerm'
-        command: 'apply'
-        workingDirectory: $(terraformWorkingDirectory)
-        environmentServiceNameAzureRM: 'akhileshserviveconnection'
-        commandOptions: 'tfplan -auto-approve'
+        targetPath: '$(terraformWorkingDirectory)/tfplan'
+        artifact: 'terraform-plan'
+        publishLocation: 'pipeline'
