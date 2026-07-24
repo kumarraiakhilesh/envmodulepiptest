@@ -1,0 +1,29 @@
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  workingDir: '$(System.DefaultWorkingDirectory)/infra'
+
+stages:
+
+# 🔹 Stage 1 - Security Scan
+- stage: TFSEC
+  displayName: "Terraform Security Scan"
+  jobs:
+  - job: tfsec_job
+    steps:
+    - script: |
+        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+        tfsec $(workingDir)
+      displayName: "Run tfsec"
+
+# 🔹 Stage 2 - Terraform Pipeline (Child Call)
+- stage: Terraform
+  displayName: "Terraform Execution"
+  dependsOn: TFSEC
+  jobs:
+  - template: terraform-child.yml
+    parameters:
+      workingDir: $(workingDir)
