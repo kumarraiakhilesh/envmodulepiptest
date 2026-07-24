@@ -1,7 +1,7 @@
 trigger: none
 
 pool:
-  name: akhileshpool
+  name: stayndra
 
 variables:
   terraformVersion: '1.15.6'
@@ -27,13 +27,7 @@ stages:
         tfsec $(terraformWorkingDirectory)
       displayName: "Terraform tfsec Scan"
 
-    # # 3. Terraform Format Check
-    # - script: |
-    #     terraform fmt -check -recursive
-    #   workingDirectory: $(terraformWorkingDirectory)
-    #   displayName: "Terraform Format Check"
-
-    # 4. Terraform Init
+    # 3. Terraform Init
     - task: TerraformTask@5
       displayName: "Terraform Init DEV"
       inputs:
@@ -46,7 +40,7 @@ stages:
         backendAzureRmContainerName: 'akhileshcanttest'
         backendAzureRmKey: 'dev.tfstate'
 
-    # 5. Terraform Validate
+    # 4. Terraform Validate
     - task: TerraformTask@5
       displayName: "Terraform Validate DEV"
       inputs:
@@ -54,7 +48,7 @@ stages:
         command: 'validate'
         workingDirectory: $(terraformWorkingDirectory)
 
-    # 6. Terraform Plan (Saves the execution plan to tfplan)
+    # 5. Terraform Plan
     - task: TerraformTask@5
       displayName: "Terraform Plan DEV"
       inputs:
@@ -64,7 +58,7 @@ stages:
         environmentServiceNameAzureRM: 'akhileshserviveconnection'
         commandOptions: '-out=tfplan'
 
-    # 7. Publish Terraform Plan (tfplan) as a Pipeline Artifact
+    # 6. Publish Plan Artifact
     - task: PublishPipelineArtifact@1
       displayName: "Publish Terraform Plan Artifact"
       inputs:
