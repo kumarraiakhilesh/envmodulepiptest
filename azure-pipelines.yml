@@ -1,150 +1,68 @@
 trigger: none
 
 pool:
-  name: akhileshagent
-
+  name: akhileshpool
 
 variables:
-
   terraformVersion: '1.15.6'
-
-  terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infra/dev'
-
-
+  terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/env/dev'
 
 stages:
-
-
 - stage: DEV
-
   displayName: "Terraform DEV Deployment"
-
-
   jobs:
-
-
   - job: Terraform_DEV
-
     displayName: "Terraform DEV Apply"
-
-
     steps:
 
-
-
-    # Install Terraform
-
     - task: TerraformInstaller@1
-
       displayName: "Install Terraform"
-
       inputs:
-
         terraformVersion: $(terraformVersion)
 
-
-
-    # Terraform Security Scan
-
     - script: |
-
         curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-
         tfsec $(terraformWorkingDirectory)
-
       displayName: "Terraform tfsec Scan"
 
-
-
-    # Terraform Format
-
     - script: |
-
         terraform fmt -check -recursive
-
       workingDirectory: $(terraformWorkingDirectory)
-
       displayName: "Terraform Format Check"
 
-
-
-    # Terraform Init
-
     - task: TerraformTask@5
-
       displayName: "Terraform Init DEV"
-
       inputs:
-
         provider: 'azurerm'
-
         command: 'init'
-
         workingDirectory: $(terraformWorkingDirectory)
-
-
         backendServiceArm: 'akhileshserviveconnection'
-
         backendAzureRmResourceGroupName: 'akhileshtestpip'
-
         backendAzureRmStorageAccountName: 'akhileshstoragepipi'
-
         backendAzureRmContainerName: 'akhileshcanttest'
-
         backendAzureRmKey: 'dev.tfstate'
 
-
-
-    # Terraform Validate
-
     - task: TerraformTask@5
-
       displayName: "Terraform Validate DEV"
-
       inputs:
-
         provider: 'azurerm'
-
         command: 'validate'
-
         workingDirectory: $(terraformWorkingDirectory)
-
-
-
-    # Terraform Plan
 
     - task: TerraformTask@5
-
       displayName: "Terraform Plan DEV"
-
       inputs:
-
         provider: 'azurerm'
-
         command: 'plan'
-
         workingDirectory: $(terraformWorkingDirectory)
-
         environmentServiceNameAzureRM: 'akhileshserviveconnection'
-
         commandOptions: '-out=tfplan'
 
-
-
-    # Terraform Apply Auto Approve
-
     - task: TerraformTask@5
-
       displayName: "Terraform Apply DEV AUTO APPROVE"
-
       inputs:
-
         provider: 'azurerm'
-
         command: 'apply'
-
         workingDirectory: $(terraformWorkingDirectory)
-
         environmentServiceNameAzureRM: 'akhileshserviveconnection'
-
         commandOptions: 'tfplan -auto-approve'
