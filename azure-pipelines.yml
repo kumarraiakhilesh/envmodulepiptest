@@ -316,6 +316,7 @@ stages:
         backendAzureRmStorageAccountName: '$(backendStorageAccount)'
         backendAzureRmContainerName: '$(backendContainer)'
         backendAzureRmKey: '$(backendKey)'
+        backendAzureRmUseAzureADAuth: false
 
 
 # =====================================================
@@ -367,6 +368,7 @@ stages:
         backendAzureRmStorageAccountName: '$(backendStorageAccount)'
         backendAzureRmContainerName: '$(backendContainer)'
         backendAzureRmKey: '$(backendKey)'
+        backendAzureRmUseAzureADAuth: false
 
     - task: TerraformTask@5
       displayName: 'Terraform Validate'
@@ -488,6 +490,7 @@ stages:
         backendAzureRmStorageAccountName: '$(backendStorageAccount)'
         backendAzureRmContainerName: '$(backendContainer)'
         backendAzureRmKey: '$(backendKey)'
+        backendAzureRmUseAzureADAuth: false
 
     - task: TerraformTask@5
       displayName: 'Terraform Plan Binary Generation'
@@ -727,6 +730,7 @@ stages:
               backendAzureRmStorageAccountName: '$(backendStorageAccount)'
               backendAzureRmContainerName: '$(backendContainer)'
               backendAzureRmKey: '$(backendKey)'
+              backendAzureRmUseAzureADAuth: false
 
           - task: TerraformTask@5
             displayName: 'Terraform Apply'
