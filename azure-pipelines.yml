@@ -9,7 +9,7 @@ pr:
       - main
 
 pool:
-  vmImage: ubuntu-latest
+  name: akhileshrai
 
 variables:
   terraformVersion: 'latest'
