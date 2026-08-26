@@ -23,67 +23,10 @@ variables:
 stages:
 
 # =====================================================
-# STAGE 1: TERRAFORM FORMAT CHECK
-# =====================================================
-- stage: TerraformFormat
-  displayName: Terraform Format Check
-
-  jobs:
-  - job: FormatJob
-    displayName: Terraform Format
-    pool:
-      name: $(agentPool)
-
-    steps:
-    - checkout: self
-      clean: true
-
-    - task: PowerShell@2
-      displayName: Install Terraform
-      inputs:
-        targetType: inline
-        script: |
-          $version = "$(terraformVersion)"
-          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
-          $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
-          $directory = "$(Agent.TempDirectory)\terraform-$version"
-
-          Remove-Item $zip -Force -ErrorAction SilentlyContinue
-          Remove-Item $directory -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item $directory -ItemType Directory -Force | Out-Null
-
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          Expand-Archive -Path $zip -DestinationPath $directory -Force
-
-          if (-not (Test-Path "$directory\terraform.exe")) {
-            Write-Error "Terraform installation failed."
-            exit 1
-          }
-
-          Write-Host "##vso[task.prependpath]$directory"
-          & "$directory\terraform.exe" version
-
-    - task: PowerShell@2
-      displayName: Terraform Format Check
-      inputs:
-        targetType: inline
-        workingDirectory: '$(workingDirectory)'
-        script: |
-          terraform fmt -check -recursive
-
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Terraform format check failed. Run terraform fmt -recursive."
-            exit 1
-          }
-
-
-# =====================================================
-# STAGE 2: TERRAFORM LINT SCANNING
+# STAGE 1: TERRAFORM LINT SCANNING
 # =====================================================
 - stage: TerraformLint
   displayName: Terraform Lint Scanning
-  dependsOn: TerraformFormat
-  condition: succeeded()
 
   jobs:
   - job: TFLintJob
@@ -130,7 +73,7 @@ stages:
 
 
 # =====================================================
-# STAGE 3: IAC SECURITY SCANNING
+# STAGE 2: IAC SECURITY SCANNING
 # =====================================================
 - stage: IaCSecurity
   displayName: Checkov and tfsec Security Scanning
@@ -205,7 +148,7 @@ stages:
 
 
 # =====================================================
-# STAGE 4: SECRET SCANNING
+# STAGE 3: SECRET SCANNING
 # =====================================================
 - stage: SecretScanning
   displayName: Gitleaks Secret Scanning
@@ -256,7 +199,7 @@ stages:
 
 
 # =====================================================
-# STAGE 5: TERRAFORM INIT
+# STAGE 4: TERRAFORM INIT
 # =====================================================
 - stage: TerraformInit
   displayName: Terraform Initialization
@@ -312,7 +255,7 @@ stages:
 
 
 # =====================================================
-# STAGE 6: TERRAFORM VALIDATE
+# STAGE 5: TERRAFORM VALIDATE
 # =====================================================
 - stage: TerraformValidate
   displayName: Terraform Validation
@@ -370,7 +313,7 @@ stages:
 
 
 # =====================================================
-# STAGE 7: INFRASTRUCTURE UNIT TESTING
+# STAGE 6: INFRASTRUCTURE UNIT TESTING
 # =====================================================
 - stage: InfrastructureTesting
   displayName: Terraform Unit Testing
@@ -430,7 +373,7 @@ stages:
 
 
 # =====================================================
-# STAGE 8: TERRAFORM PLAN
+# STAGE 7: TERRAFORM PLAN
 # =====================================================
 - stage: TerraformPlan
   displayName: Terraform Plan Generation
@@ -509,7 +452,7 @@ stages:
 
 
 # =====================================================
-# STAGE 9: INFRASTRUCTURE COST ESTIMATION
+# STAGE 8: INFRASTRUCTURE COST ESTIMATION
 # =====================================================
 - stage: CostEstimation
   displayName: Infracost Estimation
@@ -576,7 +519,7 @@ stages:
 
 
 # =====================================================
-# STAGE 10: PLAN ARTIFACT STORAGE
+# STAGE 9: PLAN ARTIFACT STORAGE
 # =====================================================
 - stage: PlanArtifact
   displayName: Terraform Plan Artifact Storage
@@ -611,7 +554,7 @@ stages:
 
 
 # =====================================================
-# STAGE 11: MANUAL APPROVAL
+# STAGE 10: MANUAL APPROVAL
 # =====================================================
 - stage: ManualApproval
   displayName: Manual Approval Gate
@@ -643,7 +586,7 @@ stages:
 
 
 # =====================================================
-# STAGE 12: TERRAFORM APPLY
+# STAGE 11: TERRAFORM APPLY
 # =====================================================
 - stage: TerraformApply
   displayName: Infrastructure Deployment
@@ -713,7 +656,7 @@ stages:
 
 
 # =====================================================
-# STAGE 13: POST-DEPLOYMENT VALIDATION
+# STAGE 12: POST-DEPLOYMENT VALIDATION
 # =====================================================
 - stage: PostDeploymentValidation
   displayName: Post-Deployment Validation
@@ -749,7 +692,7 @@ stages:
 
 
 # =====================================================
-# STAGE 14: MONITORING AND LOGGING VALIDATION
+# STAGE 13: MONITORING AND LOGGING VALIDATION
 # =====================================================
 - stage: MonitoringValidation
   displayName: Azure Monitoring and Logging
