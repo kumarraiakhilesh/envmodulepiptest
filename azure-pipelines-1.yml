@@ -6,14 +6,13 @@ pool:
 variables:
   terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infra'
 
-  # Deployment के बाद application की वास्तविक URL डालें
-  # Example: https://myapp.azurewebsites.net
+  # यहां deployed application की वास्तविक URL डालें
   dastTargetUrl: 'https://your-application-url.com'
 
 jobs:
 
 # ============================================================
-# JOB 1: INIT, VALIDATE, SAST/IAC SCANS AND PLAN
+# JOB 1: INIT, VALIDATE, SECURITY SCANS AND PLAN
 # ============================================================
 - job: TerraformPlan
   displayName: Terraform Security Scan and Plan
@@ -24,17 +23,13 @@ jobs:
     clean: true
     fetchDepth: 0
 
-  # ----------------------------------------------------------
   # Install Terraform
-  # ----------------------------------------------------------
   - task: TerraformInstaller@1
     displayName: Install Terraform
     inputs:
       terraformVersion: 'latest'
 
-  # ----------------------------------------------------------
-  # Terraform Init
-  # ----------------------------------------------------------
+  # Terraform Init with updated backend
   - task: TerraformTask@5
     displayName: Terraform Init
     inputs:
@@ -43,13 +38,11 @@ jobs:
       workingDirectory: '$(terraformWorkingDirectory)'
       backendServiceArm: 'akhilesh25'
       backendAzureRmResourceGroupName: 'akhileshtestpip'
-      backendAzureRmStorageAccountName: 'akhileshstoragepipi'
+      backendAzureRmStorageAccountName: 'akhileshstoragepipi1'
       backendAzureRmContainerName: 'akhileshcanttest1'
       backendAzureRmKey: 'pipe.tfstate'
 
-  # ----------------------------------------------------------
   # Terraform Format Check
-  # ----------------------------------------------------------
   - task: PowerShell@2
     displayName: Terraform Format Check
     inputs:
@@ -63,9 +56,7 @@ jobs:
           exit 1
         }
 
-  # ----------------------------------------------------------
   # Terraform Validate
-  # ----------------------------------------------------------
   - task: TerraformTask@5
     displayName: Terraform Validate
     inputs:
@@ -73,29 +64,31 @@ jobs:
       command: 'validate'
       workingDirectory: '$(terraformWorkingDirectory)'
 
-  # ----------------------------------------------------------
-  # Install infrastructure security tools
-  # ----------------------------------------------------------
+  # Install Security Scanning Tools
   - task: PowerShell@2
     displayName: Install Security Scanning Tools
     inputs:
       targetType: inline
       script: |
-        Write-Host "Installing TFLint, tfsec and Gitleaks..."
-
+        Write-Host "Installing TFLint..."
         choco install tflint -y --no-progress
+
         if ($LASTEXITCODE -ne 0) {
           Write-Error "TFLint installation failed."
           exit 1
         }
 
+        Write-Host "Installing tfsec..."
         choco install tfsec -y --no-progress
+
         if ($LASTEXITCODE -ne 0) {
           Write-Error "tfsec installation failed."
           exit 1
         }
 
+        Write-Host "Installing Gitleaks..."
         choco install gitleaks -y --no-progress
+
         if ($LASTEXITCODE -ne 0) {
           Write-Error "Gitleaks installation failed."
           exit 1
@@ -110,11 +103,9 @@ jobs:
           exit 1
         }
 
-  # ----------------------------------------------------------
-  # TFLint – Terraform code quality scan
-  # ----------------------------------------------------------
+  # TFLint Scan
   - task: PowerShell@2
-    displayName: TFLint Security and Quality Scan
+    displayName: TFLint Code Quality Scan
     inputs:
       targetType: inline
       workingDirectory: '$(terraformWorkingDirectory)'
@@ -129,13 +120,11 @@ jobs:
         tflint --recursive
 
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "TFLint detected code issues."
+          Write-Error "TFLint detected Terraform code issues."
           exit 1
         }
 
-  # ----------------------------------------------------------
-  # tfsec – Terraform security misconfiguration scan
-  # ----------------------------------------------------------
+  # tfsec Scan
   - task: PowerShell@2
     displayName: tfsec Infrastructure Security Scan
     inputs:
@@ -147,13 +136,11 @@ jobs:
           --minimum-severity HIGH
 
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "tfsec detected HIGH or CRITICAL security issues."
+          Write-Error "tfsec detected HIGH or CRITICAL vulnerabilities."
           exit 1
         }
 
-  # ----------------------------------------------------------
-  # Checkov – Policy and compliance scan
-  # ----------------------------------------------------------
+  # Checkov Scan
   - task: PowerShell@2
     displayName: Checkov Policy and Compliance Scan
     inputs:
@@ -172,9 +159,7 @@ jobs:
           exit 1
         }
 
-  # ----------------------------------------------------------
-  # Gitleaks – Secrets scan
-  # ----------------------------------------------------------
+  # Gitleaks Scan
   - task: PowerShell@2
     displayName: Gitleaks Secret Scan
     inputs:
@@ -192,10 +177,7 @@ jobs:
           exit 1
         }
 
-  # ----------------------------------------------------------
   # Terraform Plan
-  # Runs only when all security scans pass
-  # ----------------------------------------------------------
   - task: TerraformTask@5
     displayName: Terraform Plan
     inputs:
@@ -205,9 +187,7 @@ jobs:
       environmentServiceNameAzureRM: 'akhilesh25'
       commandOptions: '-out=tfplan'
 
-  # ----------------------------------------------------------
-  # Publish approved Terraform plan
-  # ----------------------------------------------------------
+  # Publish Terraform Plan
   - task: PublishPipelineArtifact@1
     displayName: Publish Terraform Plan
     inputs:
@@ -234,17 +214,17 @@ jobs:
     inputs:
       notifyUsers: ''
       instructions: |
-        Terraform validation and security scans have passed.
+        Terraform validation and all security scans have passed.
 
         Please review:
         1. Terraform Plan
-        2. TFLint results
-        3. tfsec results
-        4. Checkov results
-        5. Gitleaks results
+        2. TFLint report
+        3. tfsec report
+        4. Checkov report
+        5. Gitleaks report
 
         Click Resume to run Terraform Apply.
-      onTimeout: reject
+      onTimeout: 'reject'
 
 
 # ============================================================
@@ -268,6 +248,7 @@ jobs:
     inputs:
       terraformVersion: 'latest'
 
+  # Terraform Re-Init with updated backend
   - task: TerraformTask@5
     displayName: Terraform Re-Init
     inputs:
@@ -276,7 +257,7 @@ jobs:
       workingDirectory: '$(terraformWorkingDirectory)'
       backendServiceArm: 'akhilesh25'
       backendAzureRmResourceGroupName: 'akhileshtestpip'
-      backendAzureRmStorageAccountName: 'akhileshstoragepipi'
+      backendAzureRmStorageAccountName: 'akhileshstoragepipi1'
       backendAzureRmContainerName: 'akhileshcanttest1'
       backendAzureRmKey: 'pipe.tfstate'
 
@@ -297,7 +278,7 @@ jobs:
 
 
 # ============================================================
-# JOB 4: DAST SCAN AFTER DEPLOYMENT
+# JOB 4: DAST SECURITY SCAN
 # ============================================================
 - job: DASTScan
   displayName: OWASP ZAP DAST Scan
@@ -332,11 +313,16 @@ jobs:
           [string]::IsNullOrWhiteSpace($targetUrl) -or
           $targetUrl -eq "https://your-application-url.com"
         ) {
-          Write-Error "Please configure dastTargetUrl with the deployed application URL."
+          Write-Error "Configure dastTargetUrl with the deployed application URL."
           exit 1
         }
 
         docker pull zaproxy/zap-stable
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Unable to download the OWASP ZAP Docker image."
+          exit 1
+        }
 
         docker run --rm `
           -v "$(System.DefaultWorkingDirectory):/zap/wrk/:rw" `
@@ -357,4 +343,4 @@ jobs:
     inputs:
       targetPath: '$(System.DefaultWorkingDirectory)/zap-report.html'
       artifact: 'owasp-zap-report'
-      publishLocation: pipeline
+      publishLocation: 'pipeline'
