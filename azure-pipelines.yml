@@ -1,66 +1,210 @@
-trigger: none
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
 
 pool:
-  name: akhileshrai
+  vmImage: ubuntu-latest
 
 variables:
-  terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infra'
+  terraformVersion: 'latest'
+  workingDirectory: '$(System.DefaultWorkingDirectory)/Env/Dev'
+  azureServiceConnection: 'akhileshinf'
 
-steps:
+  # Terraform remote backend
+  backendResourceGroup: 'akhileshtestpip'
+  backendStorageAccount: 'akhileshstoragepipi1'
+  backendContainer: 'akhileshcanttest1'
+  backendKey: 'pipe.tfstate'
 
-# Install Terraform
-- task: TerraformInstaller@1
-  displayName: Install Terraform
-  inputs:
-    terraformVersion: 'latest'
+stages:
 
-# Check Terraform formatting
-- task: TerraformTask@5
-  displayName: Terraform Format Check
-  inputs:
-    provider: 'azurerm'
-    command: 'custom'
-    customCommand: 'fmt'
-    workingDirectory: '$(terraformWorkingDirectory)'
-    commandOptions: '-check -recursive'
+# =====================================================
+# STAGE 1: SECURITY SCAN, INIT, VALIDATE AND PLAN
+# =====================================================
+- stage: TerraformPlan
+  displayName: Security Scan and Terraform Plan
 
-# Terraform Init
-- task: TerraformTask@5
-  displayName: Terraform Init
-  inputs:
-    provider: 'azurerm'
-    command: 'init'
-    workingDirectory: '$(terraformWorkingDirectory)'
-    backendServiceArm: 'Azure-Service-Connection'
-    backendAzureRmResourceGroupName: 'g2'
-    backendAzureRmStorageAccountName: 'gstorageakhilesh'
-    backendAzureRmContainerName: 'g2cant'
-    backendAzureRmKey: 'terraform.tfstate'
+  jobs:
+  - job: TerraformPlanJob
+    displayName: Terraform Security and Plan
+    steps:
 
-# Terraform Validate
-- task: TerraformTask@5
-  displayName: Terraform Validate
-  inputs:
-    provider: 'azurerm'
-    command: 'validate'
-    workingDirectory: '$(terraformWorkingDirectory)'
+    # Checkout repository
+    - checkout: self
+      clean: true
 
-# Terraform Plan
-- task: TerraformTask@5
-  displayName: Terraform Plan
-  inputs:
-    provider: 'azurerm'
-    command: 'plan'
-    workingDirectory: '$(terraformWorkingDirectory)'
-    environmentServiceNameAzureRM: 'Azure-Service-Connection'
-    commandOptions: '-out=tfplan'
+    # Install Terraform
+    - task: TerraformInstaller@1
+      displayName: Install Terraform
+      inputs:
+        terraformVersion: '$(terraformVersion)'
 
-# Terraform Apply
-- task: TerraformTask@5
+    # Terraform formatting check
+    - bash: |
+        terraform fmt -check -recursive
+      displayName: Terraform Format Check
+      workingDirectory: '$(workingDirectory)'
+
+    # Install and run TFLint
+    - bash: |
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+        tflint --init
+        tflint --recursive
+      displayName: TFLint Scan
+      workingDirectory: '$(workingDirectory)'
+
+    # Install and run tfsec
+    - bash: |
+        curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+        tfsec . --minimum-severity HIGH
+      displayName: tfsec Security Scan
+      workingDirectory: '$(workingDirectory)'
+
+    # Install and run Checkov
+    - bash: |
+        python3 -m pip install --user checkov
+        export PATH="$HOME/.local/bin:$PATH"
+        checkov -d . --framework terraform \
+          --soft-fail-on MEDIUM,LOW
+      displayName: Checkov IaC Security Scan
+      workingDirectory: '$(workingDirectory)'
+
+    # Terraform Init with Azure backend
+    - task: TerraformTask@5
+      displayName: Terraform Init
+      inputs:
+        provider: azurerm
+        command: init
+        workingDirectory: '$(workingDirectory)'
+        backendServiceArm: '$(azureServiceConnection)'
+        backendAzureRmResourceGroupName: '$(backendResourceGroup)'
+        backendAzureRmStorageAccountName: '$(backendStorageAccount)'
+        backendAzureRmContainerName: '$(backendContainer)'
+        backendAzureRmKey: '$(backendKey)'
+
+    # Terraform Validate
+    - task: TerraformTask@5
+      displayName: Terraform Validate
+      inputs:
+        provider: azurerm
+        command: validate
+        workingDirectory: '$(workingDirectory)'
+
+    # Terraform Plan
+    - task: TerraformTask@5
+      displayName: Terraform Plan
+      inputs:
+        provider: azurerm
+        command: plan
+        workingDirectory: '$(workingDirectory)'
+        environmentServiceNameAzureRM: '$(azureServiceConnection)'
+        commandOptions: >
+          -out=$(Build.ArtifactStagingDirectory)/tfplan
+          -input=false
+
+    # Store Terraform plan as artifact
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Terraform Plan
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)/tfplan'
+        artifact: 'terraform-plan'
+        publishLocation: pipeline
+
+
+# =====================================================
+# STAGE 2: MANUAL APPROVAL
+# =====================================================
+- stage: ManualApproval
+  displayName: Manual Approval
+  dependsOn: TerraformPlan
+  condition: succeeded()
+
+  jobs:
+  - job: WaitForApproval
+    displayName: Review and Approve Terraform Plan
+    pool: server
+    timeoutInMinutes: 1440
+
+    steps:
+    - task: ManualValidation@1
+      displayName: Approve Infrastructure Deployment
+      timeoutInMinutes: 1440
+      inputs:
+        instructions: |
+          Please review the Terraform plan artifact.
+
+          Verify:
+          1. Resources being created, changed or destroyed
+          2. Network and security configuration
+          3. Resource naming and Azure region
+          4. Infrastructure cost and business impact
+
+          Approve to execute Terraform Apply.
+        onTimeout: reject
+
+
+# =====================================================
+# STAGE 3: TERRAFORM APPLY
+# =====================================================
+- stage: TerraformApply
   displayName: Terraform Apply
-  inputs:
-    provider: 'azurerm'
-    command: 'apply'
-    workingDirectory: '$(terraformWorkingDirectory)'
-    environmentServiceNameAzureRM: 'Azure-Service-Connection'
-    commandOptions: '-auto-approve tfplan'
+  dependsOn: ManualApproval
+  condition: succeeded()
+
+  jobs:
+  - deployment: TerraformApplyJob
+    displayName: Deploy Azure Infrastructure
+    environment: production
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # Deployment jobs do not checkout automatically
+          - checkout: self
+            clean: true
+
+          # Download approved Terraform plan
+          - task: DownloadPipelineArtifact@2
+            displayName: Download Terraform Plan
+            inputs:
+              artifactName: 'terraform-plan'
+              targetPath: '$(Pipeline.Workspace)/terraform-plan'
+
+          # Install Terraform
+          - task: TerraformInstaller@1
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: '$(terraformVersion)'
+
+          # Terraform Init again on apply agent
+          - task: TerraformTask@5
+            displayName: Terraform Init for Apply
+            inputs:
+              provider: azurerm
+              command: init
+              workingDirectory: '$(workingDirectory)'
+              backendServiceArm: '$(azureServiceConnection)'
+              backendAzureRmResourceGroupName: '$(backendResourceGroup)'
+              backendAzureRmStorageAccountName: '$(backendStorageAccount)'
+              backendAzureRmContainerName: '$(backendContainer)'
+              backendAzureRmKey: '$(backendKey)'
+
+          # Apply exactly the approved plan
+          - task: TerraformTask@5
+            displayName: Terraform Apply
+            inputs:
+              provider: azurerm
+              command: apply
+              workingDirectory: '$(workingDirectory)'
+              environmentServiceNameAzureRM: '$(azureServiceConnection)'
+              commandOptions: >
+                -input=false
+                $(Pipeline.Workspace)/terraform-plan/tfplan
