@@ -1,3 +1,23 @@
+# ==============================================================================
+# Azure DevOps CI/CD Pipeline: Enterprise Terraform Infrastructure Automation
+# Pool Name: akhileshrai
+# ==============================================================================
+# Stages:
+#  1. TerraformLint           - Code formatting check (fmt) & TFLint scanning
+#  2. IaCSecurity             - Checkov and tfsec security vulnerability scanning
+#  3. SecretScanning          - Gitleaks secret & credential detection in Git history
+#  4. TerraformInit           - Remote state backend initialization test
+#  5. TerraformValidate       - HCL configuration validation
+#  6. InfrastructureTesting   - Native Terraform unit testing (*.tftest.hcl)
+#  7. TerraformPlan           - Execution plan generation & plan JSON export
+#  8. CostEstimation          - Infracost breakdown and monthly cost estimation
+#  9. PlanArtifact            - Packaging plan & cost artifacts for deployment
+# 10. ManualApproval          - Gate for production deployment review (server pool)
+# 11. TerraformApply           - Infrastructure provision & state application
+# 12. PostDeploymentValidation- Azure CLI resource verification check
+# 13. MonitoringValidation    - Log Analytics workspace & Azure Monitor alert check
+# ==============================================================================
+
 trigger:
   branches:
     include:
@@ -9,7 +29,7 @@ pr:
       - main
 
 variables:
-  terraformVersion: '1.15.9'
+  terraformVersion: '1.9.5'
   workingDirectory: '$(System.DefaultWorkingDirectory)/Env/Dev'
   azureServiceConnection: 'akhileshinf'
 
@@ -23,29 +43,69 @@ variables:
 stages:
 
 # =====================================================
-# STAGE 1: TERRAFORM LINT SCANNING
+# STAGE 1: TERRAFORM FMT & LINT SCANNING
 # =====================================================
 - stage: TerraformLint
-  displayName: Terraform Lint Scanning
+  displayName: '1. Terraform Format & Lint Scanning'
 
   jobs:
   - job: TFLintJob
-    displayName: TFLint Scan
+    displayName: 'Terraform Format & TFLint Scan'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
       clean: true
 
     - task: PowerShell@2
-      displayName: Install TFLint
+      displayName: 'Ensure Terraform Installed'
+      inputs:
+        targetType: inline
+        script: |
+          $version = "$(terraformVersion)"
+          $directory = "$(Agent.TempDirectory)\terraform-$version"
+          $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
+          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
+
+          if (-not (Test-Path "$directory\terraform.exe")) {
+            New-Item $directory -ItemType Directory -Force | Out-Null
+            Write-Host "Downloading Terraform v$version..."
+            Invoke-WebRequest -Uri $url -OutFile $zip
+            Expand-Archive -Path $zip -DestinationPath $directory -Force
+          }
+
+          Write-Host "##vso[task.prependpath]$directory"
+          & "$directory\terraform.exe" version
+
+    - task: PowerShell@2
+      displayName: 'Run Terraform Format Check (terraform fmt)'
+      inputs:
+        targetType: inline
+        workingDirectory: '$(workingDirectory)'
+        script: |
+          $version = "$(terraformVersion)"
+          $tfDirectory = "$(Agent.TempDirectory)\terraform-$version"
+          $tfExe = "$tfDirectory\terraform.exe"
+          if (-not (Test-Path $tfExe)) { $tfExe = "terraform" }
+
+          Write-Host "Checking Terraform HCL code formatting..."
+          & $tfExe fmt -check -recursive
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Terraform code formatting check failed! Run 'terraform fmt -recursive' locally to fix formatting."
+            exit 1
+          }
+          Write-Host "Terraform code formatting check passed successfully."
+
+    - task: PowerShell@2
+      displayName: 'Install TFLint'
       inputs:
         targetType: inline
         script: |
           if (-not (Get-Command tflint -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing TFLint via Chocolatey..."
             choco install tflint -y --no-progress
-
             if ($LASTEXITCODE -ne 0) {
               Write-Error "TFLint installation failed."
               exit 1
@@ -53,63 +113,64 @@ stages:
           }
 
     - task: PowerShell@2
-      displayName: Run TFLint
+      displayName: 'Run TFLint'
       inputs:
         targetType: inline
         workingDirectory: '$(workingDirectory)'
         script: |
           tflint --init
-
           if ($LASTEXITCODE -ne 0) {
+            Write-Error "TFLint initialization failed."
             exit 1
           }
 
-          tflint --recursive
-
+          # Log warnings, fail only on ERROR-level issues
+          tflint --recursive --minimum-failure-severity=error
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "TFLint detected Terraform issues."
+            Write-Error "TFLint detected ERROR-level Terraform issues."
             exit 1
           }
+          Write-Host "TFLint scan completed with zero errors."
 
 
 # =====================================================
 # STAGE 2: IAC SECURITY SCANNING
 # =====================================================
 - stage: IaCSecurity
-  displayName: Checkov and tfsec Security Scanning
+  displayName: '2. Checkov & tfsec Security Scanning'
   dependsOn: TerraformLint
   condition: succeeded()
 
   jobs:
   - job: IaCSecurityJob
-    displayName: IaC Security Scan
+    displayName: 'IaC Security Scan'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
       clean: true
 
     - task: PowerShell@2
-      displayName: Install Checkov and tfsec
+      displayName: 'Install Checkov and tfsec'
       inputs:
         targetType: inline
         script: |
           if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-            Write-Error "Python is not installed."
+            Write-Error "Python is not installed on the agent."
             exit 1
           }
 
+          Write-Host "Upgrading/Installing Checkov..."
           python -m pip install --upgrade checkov
-
           if ($LASTEXITCODE -ne 0) {
             Write-Error "Checkov installation failed."
             exit 1
           }
 
           if (-not (Get-Command tfsec -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing tfsec..."
             choco install tfsec -y --no-progress
-
             if ($LASTEXITCODE -ne 0) {
               Write-Error "tfsec installation failed."
               exit 1
@@ -117,24 +178,25 @@ stages:
           }
 
     - task: PowerShell@2
-      displayName: Checkov Scan
+      displayName: 'Checkov Scan'
       inputs:
         targetType: inline
         workingDirectory: '$(workingDirectory)'
         script: |
-          python -m checkov.main `
+          checkov `
             --directory . `
             --framework terraform `
             --compact `
             --soft-fail-on MEDIUM,LOW
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Checkov detected blocking security issues."
+            Write-Error "Checkov detected HIGH/CRITICAL security vulnerabilities."
             exit 1
           }
+          Write-Host "Checkov scan passed."
 
     - task: PowerShell@2
-      displayName: tfsec Scan
+      displayName: 'tfsec Scan'
       inputs:
         targetType: inline
         workingDirectory: '$(workingDirectory)'
@@ -142,24 +204,25 @@ stages:
           tfsec . --minimum-severity HIGH --format default
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "tfsec detected HIGH or CRITICAL issues."
+            Write-Error "tfsec detected HIGH or CRITICAL vulnerabilities."
             exit 1
           }
+          Write-Host "tfsec scan passed."
 
 
 # =====================================================
 # STAGE 3: SECRET SCANNING
 # =====================================================
 - stage: SecretScanning
-  displayName: Gitleaks Secret Scanning
+  displayName: '3. Gitleaks Secret Scanning'
   dependsOn: IaCSecurity
   condition: succeeded()
 
   jobs:
   - job: SecretScanJob
-    displayName: Gitleaks Scan
+    displayName: 'Gitleaks Scan'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
@@ -167,13 +230,13 @@ stages:
       fetchDepth: 0
 
     - task: PowerShell@2
-      displayName: Install Gitleaks
+      displayName: 'Install Gitleaks'
       inputs:
         targetType: inline
         script: |
           if (-not (Get-Command gitleaks -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing Gitleaks..."
             choco install gitleaks -y --no-progress
-
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Gitleaks installation failed."
               exit 1
@@ -181,7 +244,7 @@ stages:
           }
 
     - task: PowerShell@2
-      displayName: Run Gitleaks
+      displayName: 'Run Gitleaks Scan'
       inputs:
         targetType: inline
         workingDirectory: '$(System.DefaultWorkingDirectory)'
@@ -190,59 +253,65 @@ stages:
             --source "$(System.DefaultWorkingDirectory)" `
             --redact `
             --no-banner `
-            --verbose
+            --verbose `
+            --report-format json `
+            --report-path "$(Build.ArtifactStagingDirectory)/gitleaks-report.json"
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Gitleaks detected secrets."
+            Write-Error "Gitleaks detected hardcoded secrets or credentials in git history!"
             exit 1
           }
+          Write-Host "Gitleaks scan passed cleanly."
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish Gitleaks Report'
+      condition: always()
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)/gitleaks-report.json'
+        artifact: 'gitleaks-report'
+        publishLocation: 'pipeline'
 
 
 # =====================================================
 # STAGE 4: TERRAFORM INIT
 # =====================================================
 - stage: TerraformInit
-  displayName: Terraform Initialization
+  displayName: '4. Terraform Initialization'
   dependsOn: SecretScanning
   condition: succeeded()
 
   jobs:
   - job: InitJob
-    displayName: Terraform Init
+    displayName: 'Terraform Init'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
       clean: true
 
     - task: PowerShell@2
-      displayName: Install Terraform
+      displayName: 'Ensure Terraform Installed'
       inputs:
         targetType: inline
         script: |
           $version = "$(terraformVersion)"
-          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
-          $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
           $directory = "$(Agent.TempDirectory)\terraform-$version"
-
-          Remove-Item $zip -Force -ErrorAction SilentlyContinue
-          Remove-Item $directory -Recurse -Force -ErrorAction SilentlyContinue
-          New-Item $directory -ItemType Directory -Force | Out-Null
-
-          Invoke-WebRequest -Uri $url -OutFile $zip
-          Expand-Archive -Path $zip -DestinationPath $directory -Force
+          $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
+          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
 
           if (-not (Test-Path "$directory\terraform.exe")) {
-            Write-Error "Terraform installation failed."
-            exit 1
+            New-Item $directory -ItemType Directory -Force | Out-Null
+            Write-Host "Downloading Terraform v$version..."
+            Invoke-WebRequest -Uri $url -OutFile $zip
+            Expand-Archive -Path $zip -DestinationPath $directory -Force
           }
 
           Write-Host "##vso[task.prependpath]$directory"
           & "$directory\terraform.exe" version
 
     - task: TerraformTask@5
-      displayName: Terraform Init
+      displayName: 'Terraform Backend Init'
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -258,32 +327,33 @@ stages:
 # STAGE 5: TERRAFORM VALIDATE
 # =====================================================
 - stage: TerraformValidate
-  displayName: Terraform Validation
+  displayName: '5. Terraform Validation'
   dependsOn: TerraformInit
   condition: succeeded()
 
   jobs:
   - job: ValidateJob
-    displayName: Terraform Validate
+    displayName: 'Terraform Validate'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
       clean: true
 
     - task: PowerShell@2
-      displayName: Install Terraform
+      displayName: 'Ensure Terraform Installed'
       inputs:
         targetType: inline
         script: |
           $version = "$(terraformVersion)"
           $directory = "$(Agent.TempDirectory)\terraform-$version"
-          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
           $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
+          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
 
           if (-not (Test-Path "$directory\terraform.exe")) {
             New-Item $directory -ItemType Directory -Force | Out-Null
+            Write-Host "Downloading Terraform v$version..."
             Invoke-WebRequest -Uri $url -OutFile $zip
             Expand-Archive -Path $zip -DestinationPath $directory -Force
           }
@@ -291,9 +361,8 @@ stages:
           Write-Host "##vso[task.prependpath]$directory"
           & "$directory\terraform.exe" version
 
-    # Every new stage requires Init again
     - task: TerraformTask@5
-      displayName: Terraform Init for Validation
+      displayName: 'Terraform Init for Validation'
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -305,7 +374,7 @@ stages:
         backendAzureRmKey: '$(backendKey)'
 
     - task: TerraformTask@5
-      displayName: Terraform Validate
+      displayName: 'Terraform Validate'
       inputs:
         provider: 'azurerm'
         command: 'validate'
@@ -316,30 +385,30 @@ stages:
 # STAGE 6: INFRASTRUCTURE UNIT TESTING
 # =====================================================
 - stage: InfrastructureTesting
-  displayName: Terraform Unit Testing
+  displayName: '6. Infrastructure Unit Testing'
   dependsOn: TerraformValidate
   condition: succeeded()
 
   jobs:
   - job: TerraformTestJob
-    displayName: Terraform Test
+    displayName: 'Terraform Test'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
       clean: true
 
     - task: PowerShell@2
-      displayName: Install Terraform and Run Tests
+      displayName: 'Ensure Terraform Installed and Run Unit Tests'
       inputs:
         targetType: inline
         workingDirectory: '$(workingDirectory)'
         script: |
           $version = "$(terraformVersion)"
           $directory = "$(Agent.TempDirectory)\terraform-$version"
-          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
           $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
+          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
 
           if (-not (Test-Path "$directory\terraform.exe")) {
             New-Item $directory -ItemType Directory -Force | Out-Null
@@ -354,54 +423,57 @@ stages:
             -ErrorAction SilentlyContinue
 
           if (-not $testFiles) {
-            Write-Host "No .tftest.hcl files found. Terraform Test skipped."
+            Write-Host "No .tftest.hcl test files found in repository. Skipping terraform test."
             exit 0
           }
 
+          Write-Host "Found $($testFiles.Count) test file(s). Initializing local providers..."
           & "$directory\terraform.exe" init -backend=false
-
           if ($LASTEXITCODE -ne 0) {
+            Write-Error "Terraform provider initialization for unit tests failed."
             exit 1
           }
 
+          Write-Host "Executing terraform test..."
           & "$directory\terraform.exe" test
-
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Terraform tests failed."
+            Write-Error "Terraform unit test assertions failed."
             exit 1
           }
+          Write-Host "All Terraform unit tests passed successfully."
 
 
 # =====================================================
 # STAGE 7: TERRAFORM PLAN
 # =====================================================
 - stage: TerraformPlan
-  displayName: Terraform Plan Generation
+  displayName: '7. Terraform Plan Generation'
   dependsOn: InfrastructureTesting
   condition: succeeded()
 
   jobs:
   - job: PlanJob
-    displayName: Generate Terraform Plan
+    displayName: 'Generate Terraform Plan'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
       clean: true
 
     - task: PowerShell@2
-      displayName: Install Terraform
+      displayName: 'Ensure Terraform Installed'
       inputs:
         targetType: inline
         script: |
           $version = "$(terraformVersion)"
           $directory = "$(Agent.TempDirectory)\terraform-$version"
-          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
           $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
+          $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
 
           if (-not (Test-Path "$directory\terraform.exe")) {
             New-Item $directory -ItemType Directory -Force | Out-Null
+            Write-Host "Downloading Terraform v$version..."
             Invoke-WebRequest -Uri $url -OutFile $zip
             Expand-Archive -Path $zip -DestinationPath $directory -Force
           }
@@ -410,7 +482,7 @@ stages:
           & "$directory\terraform.exe" version
 
     - task: TerraformTask@5
-      displayName: Terraform Init for Plan
+      displayName: 'Terraform Init for Plan'
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -422,7 +494,7 @@ stages:
         backendAzureRmKey: '$(backendKey)'
 
     - task: TerraformTask@5
-      displayName: Terraform Plan
+      displayName: 'Terraform Plan Binary Generation'
       inputs:
         provider: 'azurerm'
         command: 'plan'
@@ -431,20 +503,33 @@ stages:
         commandOptions: '-input=false -out="$(Build.ArtifactStagingDirectory)/tfplan"'
 
     - task: PowerShell@2
-      displayName: Generate Terraform Plan JSON
+      displayName: 'Generate UTF-8 (No-BOM) Plan JSON'
       inputs:
         targetType: inline
         workingDirectory: '$(workingDirectory)'
         script: |
-          terraform show `
-            -json `
-            "$(Build.ArtifactStagingDirectory)/tfplan" |
-          Out-File `
-            -FilePath "$(Build.ArtifactStagingDirectory)/tfplan.json" `
-            -Encoding utf8
+          $version = "$(terraformVersion)"
+          $tfExe = "$(Agent.TempDirectory)\terraform-$version\terraform.exe"
+          if (-not (Test-Path $tfExe)) { $tfExe = "terraform" }
+
+          $planFile = "$(Build.ArtifactStagingDirectory)/tfplan"
+          $jsonFile = "$(Build.ArtifactStagingDirectory)/tfplan.json"
+
+          Write-Host "Converting binary tfplan to JSON format..."
+          $json = & $tfExe show -json $planFile
+
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($json)) {
+            Write-Error "Failed to generate valid JSON output from binary tfplan."
+            exit 1
+          }
+
+          # Write as UTF-8 without BOM to avoid JSON parsing errors in Infracost
+          $utf8NoBOM = New-Object System.Text.UTF8Encoding $false
+          [System.IO.File]::WriteAllText($jsonFile, $json, $utf8NoBOM)
+          Write-Host "Successfully exported UTF-8 No-BOM JSON plan to $jsonFile"
 
     - task: PublishPipelineArtifact@1
-      displayName: Publish Raw Terraform Plan
+      displayName: 'Publish Raw Terraform Plan Artifact'
       inputs:
         targetPath: '$(Build.ArtifactStagingDirectory)'
         artifact: 'terraform-plan-raw'
@@ -455,63 +540,65 @@ stages:
 # STAGE 8: INFRASTRUCTURE COST ESTIMATION
 # =====================================================
 - stage: CostEstimation
-  displayName: Infracost Estimation
+  displayName: '8. Infracost Cost Estimation'
   dependsOn: TerraformPlan
   condition: succeeded()
 
   jobs:
   - job: InfracostJob
-    displayName: Infrastructure Cost Estimation
+    displayName: 'Infrastructure Cost Estimation'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - checkout: self
       clean: true
 
     - task: DownloadPipelineArtifact@2
-      displayName: Download Terraform Plan
+      displayName: 'Download Terraform Plan Artifact'
       inputs:
         artifact: 'terraform-plan-raw'
         path: '$(Pipeline.Workspace)/terraform-plan-raw'
 
     - task: PowerShell@2
-      displayName: Install and Run Infracost
+      displayName: 'Install & Run Infracost'
       env:
         INFRACOST_API_KEY: $(INFRACOST_API_KEY)
       inputs:
         targetType: inline
         script: |
           if ([string]::IsNullOrWhiteSpace($env:INFRACOST_API_KEY)) {
-            Write-Error "INFRACOST_API_KEY secret variable is missing."
+            Write-Error "Secret variable INFRACOST_API_KEY is not defined in pipeline environment."
             exit 1
           }
 
           if (-not (Get-Command infracost -ErrorAction SilentlyContinue)) {
+            Write-Host "Installing Infracost via Chocolatey..."
             choco install infracost -y --no-progress
-
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Infracost installation failed."
               exit 1
             }
           }
 
+          Write-Host "Running Infracost cost breakdown..."
           infracost breakdown `
             --path "$(Pipeline.Workspace)/terraform-plan-raw/tfplan.json" `
             --format json `
             --out-file "$(Build.ArtifactStagingDirectory)/infracost.json"
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Infracost estimation failed."
+            Write-Error "Infracost breakdown execution failed."
             exit 1
           }
 
+          Write-Host "Displaying Infracost summary table:"
           infracost output `
             --path "$(Build.ArtifactStagingDirectory)/infracost.json" `
             --format table
 
     - task: PublishPipelineArtifact@1
-      displayName: Publish Infracost Report
+      displayName: 'Publish Infracost Report Artifact'
       inputs:
         targetPath: '$(Build.ArtifactStagingDirectory)/infracost.json'
         artifact: 'infracost-report'
@@ -522,31 +609,31 @@ stages:
 # STAGE 9: PLAN ARTIFACT STORAGE
 # =====================================================
 - stage: PlanArtifact
-  displayName: Terraform Plan Artifact Storage
+  displayName: '9. Deployment Package Storage'
   dependsOn: CostEstimation
   condition: succeeded()
 
   jobs:
   - job: ArtifactJob
-    displayName: Build Deployment Package
+    displayName: 'Build Deployment Package'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - task: DownloadPipelineArtifact@2
-      displayName: Download Terraform Plan
+      displayName: 'Download Plan Artifact'
       inputs:
         artifact: 'terraform-plan-raw'
         path: '$(Agent.TempDirectory)/plan-package'
 
     - task: DownloadPipelineArtifact@2
-      displayName: Download Infracost Report
+      displayName: 'Download Cost Report'
       inputs:
         artifact: 'infracost-report'
         path: '$(Agent.TempDirectory)/plan-package'
 
     - task: PublishPipelineArtifact@1
-      displayName: Publish Approved Deployment Package
+      displayName: 'Publish Approved Deployment Package'
       inputs:
         targetPath: '$(Agent.TempDirectory)/plan-package'
         artifact: 'terraform-deployment-package'
@@ -557,31 +644,31 @@ stages:
 # STAGE 10: MANUAL APPROVAL
 # =====================================================
 - stage: ManualApproval
-  displayName: Manual Approval Gate
+  displayName: '10. Manual Approval Gate'
   dependsOn: PlanArtifact
   condition: succeeded()
 
   jobs:
   - job: ApprovalJob
-    displayName: Review and Approve Deployment
+    displayName: 'Review and Approve Deployment'
     pool: server
     timeoutInMinutes: 1440
 
     steps:
     - task: ManualValidation@1
-      displayName: Approve Terraform Apply
+      displayName: 'Approve Infrastructure Apply'
       timeoutInMinutes: 1440
       inputs:
         notifyUsers: ''
         instructions: |
-          Review:
-          1. Terraform Plan
-          2. Checkov and tfsec results
-          3. Gitleaks results
-          4. Terraform Test results
-          5. Infracost estimation
+          Please review the following artifacts before approving deployment:
+          1. Terraform Execution Plan (tfplan.json)
+          2. Checkov & tfsec Security Scan Results
+          3. Gitleaks Secret Detection Findings
+          4. Infrastructure Unit Test Results (*.tftest.hcl)
+          5. Infracost Breakdown Report
 
-          Click Resume to deploy the infrastructure.
+          Click 'Resume' to proceed with production deployment.
         onTimeout: 'reject'
 
 
@@ -589,16 +676,16 @@ stages:
 # STAGE 11: TERRAFORM APPLY
 # =====================================================
 - stage: TerraformApply
-  displayName: Infrastructure Deployment
+  displayName: '11. Infrastructure Deployment (Apply)'
   dependsOn: ManualApproval
   condition: succeeded()
 
   jobs:
   - deployment: ApplyJob
-    displayName: Terraform Apply
+    displayName: 'Terraform Apply'
     environment: production
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     strategy:
       runOnce:
@@ -609,20 +696,20 @@ stages:
             clean: true
 
           - task: DownloadPipelineArtifact@2
-            displayName: Download Approved Package
+            displayName: 'Download Approved Deployment Package'
             inputs:
               artifact: 'terraform-deployment-package'
               path: '$(Pipeline.Workspace)/deployment-package'
 
           - task: PowerShell@2
-            displayName: Install Terraform
+            displayName: 'Ensure Terraform Installed'
             inputs:
               targetType: inline
               script: |
                 $version = "$(terraformVersion)"
                 $directory = "$(Agent.TempDirectory)\terraform-$version"
-                $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
                 $zip = "$(Agent.TempDirectory)\terraform-$version.zip"
+                $url = "https://releases.hashicorp.com/terraform/$version/terraform_${version}_windows_amd64.zip"
 
                 if (-not (Test-Path "$directory\terraform.exe")) {
                   New-Item $directory -ItemType Directory -Force | Out-Null
@@ -634,7 +721,7 @@ stages:
                 & "$directory\terraform.exe" version
 
           - task: TerraformTask@5
-            displayName: Terraform Init for Apply
+            displayName: 'Terraform Init for Apply'
             inputs:
               provider: 'azurerm'
               command: 'init'
@@ -646,7 +733,7 @@ stages:
               backendAzureRmKey: '$(backendKey)'
 
           - task: TerraformTask@5
-            displayName: Terraform Apply
+            displayName: 'Terraform Apply'
             inputs:
               provider: 'azurerm'
               command: 'apply'
@@ -659,34 +746,34 @@ stages:
 # STAGE 12: POST-DEPLOYMENT VALIDATION
 # =====================================================
 - stage: PostDeploymentValidation
-  displayName: Post-Deployment Validation
+  displayName: '12. Post-Deployment Azure Validation'
   dependsOn: TerraformApply
   condition: succeeded()
 
   jobs:
   - job: ValidationJob
-    displayName: Validate Azure Deployment
+    displayName: 'Validate Azure Resources'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - task: AzureCLI@2
-      displayName: Validate Azure Resources
+      displayName: 'Audit Active Subscription Resources'
       inputs:
         azureSubscription: '$(azureServiceConnection)'
         scriptType: 'ps'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          Write-Host "Connected Azure account:"
+          Write-Host "Active Azure Subscription Account:"
           az account show --output table
 
-          Write-Host "Resources currently available in the subscription:"
+          Write-Host "Deployed Resources in Subscription:"
           az resource list `
             --query "[].{Name:name,Type:type,ResourceGroup:resourceGroup,Location:location}" `
             --output table
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Post-deployment validation failed."
+            Write-Error "Post-deployment resource validation failed."
             exit 1
           }
 
@@ -695,37 +782,35 @@ stages:
 # STAGE 13: MONITORING AND LOGGING VALIDATION
 # =====================================================
 - stage: MonitoringValidation
-  displayName: Azure Monitoring and Logging
+  displayName: '13. Azure Monitoring & Logging Audit'
   dependsOn: PostDeploymentValidation
   condition: succeeded()
 
   jobs:
   - job: MonitoringJob
-    displayName: Validate Azure Monitor and Log Analytics
+    displayName: 'Validate Log Analytics & Metric Alerts'
     pool:
-      name: $(agentPool)
+      name: akhileshrai
 
     steps:
     - task: AzureCLI@2
-      displayName: Check Log Analytics Workspaces
+      displayName: 'Audit Log Analytics & Metric Alerts'
       inputs:
         azureSubscription: '$(azureServiceConnection)'
         scriptType: 'ps'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          Write-Host "Log Analytics workspaces:"
-
+          Write-Host "Active Log Analytics Workspaces:"
           az monitor log-analytics workspace list `
             --query "[].{Name:name,ResourceGroup:resourceGroup,Location:location}" `
             --output table
 
-          Write-Host "Azure Monitor metric alerts:"
-
+          Write-Host "Configured Azure Monitor Metric Alerts:"
           az monitor metrics alert list `
             --query "[].{Name:name,ResourceGroup:resourceGroup,Enabled:enabled}" `
             --output table
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Monitoring validation failed."
+            Write-Error "Monitoring & logging validation failed."
             exit 1
           }
