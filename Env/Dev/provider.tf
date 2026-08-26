@@ -1,10 +1,10 @@
 terraform {
-  backend "azurerm" {
-    resource_group_name  = "akhileshtestpip"
-    storage_account_name = "akhileshstoragepipi"
-    container_name       = "akhileshcanttest1"
-    key                  = "pipe.tfstate"
-  }
+  # # backend "azurerm" {
+  # #   # resource_group_name  = "akhileshtestpip"
+  # #   # storage_account_name = "akhileshstoragepipi"
+  # #   # container_name       = "akhileshcanttest1"
+  # #   # key                  = "pipe.tfstate"
+  # }
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
