@@ -1,21 +1,23 @@
 trigger: none
 
-pool:
-  name: Akhilesh
-
 variables:
   terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infra'
+  terraformVersion: '1.15.9'
 
-  # यहां deployed application की वास्तविक URL डालें
+  # DAST चलाने के लिए true करें और वास्तविक URL डालें
+  runDAST: 'false'
   dastTargetUrl: 'https://your-application-url.com'
 
 jobs:
 
 # ============================================================
-# JOB 1: INIT, VALIDATE, SECURITY SCANS AND PLAN
+# JOB 1: SECURITY SCANS AND TERRAFORM PLAN
 # ============================================================
 - job: TerraformPlan
-  displayName: Terraform Security Scan and Plan
+  displayName: Security Scans and Terraform Plan
+
+  pool:
+    name: Akhilesh
 
   steps:
 
@@ -23,13 +25,65 @@ jobs:
     clean: true
     fetchDepth: 0
 
+  # Corrupt Terraform tool-cache repair
+  - task: PowerShell@2
+    displayName: Repair Terraform Tool Cache
+    inputs:
+      targetType: inline
+      script: |
+        $versionDirectory = "$(Agent.ToolsDirectory)\terraform\$(terraformVersion)"
+        $terraformExe = "$versionDirectory\x64\terraform.exe"
+
+        Write-Host "Checking Terraform cache: $versionDirectory"
+
+        if ((Test-Path $versionDirectory) -and
+            (-not (Test-Path $terraformExe))) {
+
+          Write-Warning "Incomplete Terraform cache detected."
+          Write-Warning "Removing: $versionDirectory"
+
+          Remove-Item `
+            -Path $versionDirectory `
+            -Recurse `
+            -Force
+
+          Write-Host "Corrupt Terraform cache removed."
+        }
+        else {
+          Write-Host "No corrupt Terraform cache detected."
+        }
+
   # Install Terraform
   - task: TerraformInstaller@1
     displayName: Install Terraform
     inputs:
-      terraformVersion: 'latest'
+      terraformVersion: '$(terraformVersion)'
 
-  # Terraform Init with updated backend
+  # Verify Terraform installation
+  - task: PowerShell@2
+    displayName: Verify Terraform Installation
+    inputs:
+      targetType: inline
+      script: |
+        $terraformCommand = Get-Command terraform `
+          -ErrorAction SilentlyContinue
+
+        if (-not $terraformCommand) {
+          Write-Error "terraform.exe is not installed or not available in PATH."
+          exit 1
+        }
+
+        Write-Host "Terraform executable:"
+        Write-Host $terraformCommand.Source
+
+        terraform version
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Terraform executable could not be started."
+          exit 1
+        }
+
+  # Terraform Init
   - task: TerraformTask@5
     displayName: Terraform Init
     inputs:
@@ -42,7 +96,7 @@ jobs:
       backendAzureRmContainerName: 'akhileshcanttest1'
       backendAzureRmKey: 'pipe.tfstate'
 
-  # Terraform Format Check
+  # Terraform Format
   - task: PowerShell@2
     displayName: Terraform Format Check
     inputs:
@@ -52,7 +106,8 @@ jobs:
         terraform fmt -check -recursive
 
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "Terraform formatting check failed."
+          Write-Error "Terraform files are not formatted."
+          Write-Host "Run: terraform fmt -recursive"
           exit 1
         }
 
@@ -64,48 +119,59 @@ jobs:
       command: 'validate'
       workingDirectory: '$(terraformWorkingDirectory)'
 
-  # Install Security Scanning Tools
+  # Install security tools
   - task: PowerShell@2
     displayName: Install Security Scanning Tools
     inputs:
       targetType: inline
       script: |
-        Write-Host "Installing TFLint..."
-        choco install tflint -y --no-progress
-
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "TFLint installation failed."
+        if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+          Write-Error "Chocolatey is not installed on the agent."
           exit 1
         }
 
-        Write-Host "Installing tfsec..."
-        choco install tfsec -y --no-progress
+        if (-not (Get-Command tflint -ErrorAction SilentlyContinue)) {
+          Write-Host "Installing TFLint..."
+          choco install tflint -y --no-progress
 
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "tfsec installation failed."
-          exit 1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "TFLint installation failed."
+            exit 1
+          }
         }
 
-        Write-Host "Installing Gitleaks..."
-        choco install gitleaks -y --no-progress
+        if (-not (Get-Command tfsec -ErrorAction SilentlyContinue)) {
+          Write-Host "Installing tfsec..."
+          choco install tfsec -y --no-progress
 
-        if ($LASTEXITCODE -ne 0) {
-          Write-Error "Gitleaks installation failed."
-          exit 1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "tfsec installation failed."
+            exit 1
+          }
+        }
+
+        if (-not (Get-Command gitleaks -ErrorAction SilentlyContinue)) {
+          Write-Host "Installing Gitleaks..."
+          choco install gitleaks -y --no-progress
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Gitleaks installation failed."
+            exit 1
+          }
         }
 
         Write-Host "Installing Checkov..."
         python -m pip install --upgrade pip
-        python -m pip install checkov
+        python -m pip install --upgrade checkov
 
         if ($LASTEXITCODE -ne 0) {
           Write-Error "Checkov installation failed."
           exit 1
         }
 
-  # TFLint Scan
+  # TFLint scan
   - task: PowerShell@2
-    displayName: TFLint Code Quality Scan
+    displayName: TFLint Scan
     inputs:
       targetType: inline
       workingDirectory: '$(terraformWorkingDirectory)'
@@ -120,13 +186,13 @@ jobs:
         tflint --recursive
 
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "TFLint detected Terraform code issues."
+          Write-Error "TFLint detected Terraform issues."
           exit 1
         }
 
-  # tfsec Scan
+  # tfsec scan
   - task: PowerShell@2
-    displayName: tfsec Infrastructure Security Scan
+    displayName: tfsec Security Scan
     inputs:
       targetType: inline
       workingDirectory: '$(terraformWorkingDirectory)'
@@ -136,13 +202,13 @@ jobs:
           --minimum-severity HIGH
 
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "tfsec detected HIGH or CRITICAL vulnerabilities."
+          Write-Error "tfsec detected HIGH or CRITICAL security issues."
           exit 1
         }
 
-  # Checkov Scan
+  # Checkov scan
   - task: PowerShell@2
-    displayName: Checkov Policy and Compliance Scan
+    displayName: Checkov Compliance Scan
     inputs:
       targetType: inline
       workingDirectory: '$(terraformWorkingDirectory)'
@@ -159,7 +225,7 @@ jobs:
           exit 1
         }
 
-  # Gitleaks Scan
+  # Gitleaks scan
   - task: PowerShell@2
     displayName: Gitleaks Secret Scan
     inputs:
@@ -187,7 +253,7 @@ jobs:
       environmentServiceNameAzureRM: 'akhilesh25'
       commandOptions: '-out=tfplan'
 
-  # Publish Terraform Plan
+  # Publish Plan
   - task: PublishPipelineArtifact@1
     displayName: Publish Terraform Plan
     inputs:
@@ -203,27 +269,28 @@ jobs:
   displayName: Manual Approval
   dependsOn: TerraformPlan
   condition: succeeded()
+
   pool: server
   timeoutInMinutes: 1440
 
   steps:
 
   - task: ManualValidation@1
-    displayName: Approve Terraform Deployment
+    displayName: Approve Terraform Apply
     timeoutInMinutes: 1440
     inputs:
       notifyUsers: ''
       instructions: |
-        Terraform validation and all security scans have passed.
+        Terraform validation and security scans passed.
 
-        Please review:
+        Review:
         1. Terraform Plan
-        2. TFLint report
-        3. tfsec report
-        4. Checkov report
-        5. Gitleaks report
+        2. TFLint results
+        3. tfsec results
+        4. Checkov results
+        5. Gitleaks results
 
-        Click Resume to run Terraform Apply.
+        Click Resume to deploy the infrastructure.
       onTimeout: 'reject'
 
 
@@ -243,12 +310,48 @@ jobs:
   - checkout: self
     clean: true
 
+  # Repair cache if required
+  - task: PowerShell@2
+    displayName: Repair Terraform Tool Cache
+    inputs:
+      targetType: inline
+      script: |
+        $versionDirectory = "$(Agent.ToolsDirectory)\terraform\$(terraformVersion)"
+        $terraformExe = "$versionDirectory\x64\terraform.exe"
+
+        if ((Test-Path $versionDirectory) -and
+            (-not (Test-Path $terraformExe))) {
+
+          Write-Warning "Incomplete Terraform cache detected."
+
+          Remove-Item `
+            -Path $versionDirectory `
+            -Recurse `
+            -Force
+        }
+
   - task: TerraformInstaller@1
     displayName: Install Terraform
     inputs:
-      terraformVersion: 'latest'
+      terraformVersion: '$(terraformVersion)'
 
-  # Terraform Re-Init with updated backend
+  - task: PowerShell@2
+    displayName: Verify Terraform Installation
+    inputs:
+      targetType: inline
+      script: |
+        $terraformCommand = Get-Command terraform `
+          -ErrorAction SilentlyContinue
+
+        if (-not $terraformCommand) {
+          Write-Error "terraform.exe is not available."
+          exit 1
+        }
+
+        Write-Host $terraformCommand.Source
+        terraform version
+
+  # Terraform Re-Init
   - task: TerraformTask@5
     displayName: Terraform Re-Init
     inputs:
@@ -261,12 +364,14 @@ jobs:
       backendAzureRmContainerName: 'akhileshcanttest1'
       backendAzureRmKey: 'pipe.tfstate'
 
+  # Download exact approved plan
   - task: DownloadPipelineArtifact@2
     displayName: Download Approved Terraform Plan
     inputs:
       artifact: 'terraform-plan'
       path: '$(terraformWorkingDirectory)'
 
+  # Apply exact approved plan
   - task: TerraformTask@5
     displayName: Terraform Apply
     inputs:
@@ -278,12 +383,16 @@ jobs:
 
 
 # ============================================================
-# JOB 4: DAST SECURITY SCAN
+# JOB 4: OPTIONAL DAST SCAN
 # ============================================================
 - job: DASTScan
   displayName: OWASP ZAP DAST Scan
   dependsOn: TerraformApply
-  condition: succeeded()
+  condition: |
+    and(
+      succeeded(),
+      eq(variables['runDAST'], 'true')
+    )
 
   pool:
     name: Akhilesh
@@ -291,10 +400,17 @@ jobs:
   steps:
 
   - task: PowerShell@2
-    displayName: Verify Docker
+    displayName: Validate DAST Configuration
     inputs:
       targetType: inline
       script: |
+        $targetUrl = "$(dastTargetUrl)"
+
+        if ($targetUrl -eq "https://your-application-url.com") {
+          Write-Error "Configure dastTargetUrl with the deployed application URL."
+          exit 1
+        }
+
         docker version
 
         if ($LASTEXITCODE -ne 0) {
@@ -307,20 +423,10 @@ jobs:
     inputs:
       targetType: inline
       script: |
-        $targetUrl = "$(dastTargetUrl)"
-
-        if (
-          [string]::IsNullOrWhiteSpace($targetUrl) -or
-          $targetUrl -eq "https://your-application-url.com"
-        ) {
-          Write-Error "Configure dastTargetUrl with the deployed application URL."
-          exit 1
-        }
-
         docker pull zaproxy/zap-stable
 
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "Unable to download the OWASP ZAP Docker image."
+          Write-Error "OWASP ZAP image download failed."
           exit 1
         }
 
@@ -328,12 +434,12 @@ jobs:
           -v "$(System.DefaultWorkingDirectory):/zap/wrk/:rw" `
           zaproxy/zap-stable `
           zap-baseline.py `
-          -t $targetUrl `
+          -t "$(dastTargetUrl)" `
           -r zap-report.html `
           -I
 
         if ($LASTEXITCODE -ne 0) {
-          Write-Error "OWASP ZAP detected blocking vulnerabilities."
+          Write-Error "OWASP ZAP scan failed."
           exit 1
         }
 
