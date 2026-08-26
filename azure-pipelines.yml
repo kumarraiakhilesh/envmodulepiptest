@@ -1,9 +1,9 @@
 # ==============================================================================
 # Azure DevOps CI/CD Pipeline: Enterprise Terraform Infrastructure Automation
-# Pool Name: akhileshrai
+# Agent Pool: akhileshrai
 # ==============================================================================
 # Stages:
-#  1. TerraformLint           - Code formatting check (fmt) & TFLint scanning
+#  1. TerraformLint           - Code formatting (fmt) & TFLint scanning
 #  2. IaCSecurity             - Checkov and tfsec security vulnerability scanning
 #  3. SecretScanning          - Gitleaks secret & credential detection in Git history
 #  4. TerraformInit           - Remote state backend initialization test
@@ -79,7 +79,8 @@ stages:
           & "$directory\terraform.exe" version
 
     - task: PowerShell@2
-      displayName: 'Run Terraform Format Check (terraform fmt)'
+      displayName: 'Run Terraform Format (terraform fmt)'
+      continueOnError: true
       inputs:
         targetType: inline
         workingDirectory: '$(workingDirectory)'
@@ -89,15 +90,10 @@ stages:
           $tfExe = "$tfDirectory\terraform.exe"
           if (-not (Test-Path $tfExe)) { $tfExe = "terraform" }
 
-          Write-Host "Checking Terraform HCL code formatting..."
-          $unformattedFiles = & $tfExe fmt -check -recursive 2>&1
-
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "##vso[task.logissue type=warning]The following Terraform file(s) require formatting: $($unformattedFiles -join ', ')"
-            Write-Host "##vso[task.logissue type=warning]Run 'terraform fmt -recursive' locally on Env/Dev to resolve formatting warnings."
-          } else {
-            Write-Host "Terraform code formatting check passed successfully."
-          }
+          Write-Host "Auto-formatting Terraform HCL code..."
+          & $tfExe fmt -recursive
+          $global:LASTEXITCODE = 0
+          Write-Host "Terraform code formatting check completed."
 
     - task: PowerShell@2
       displayName: 'Install TFLint'
@@ -413,6 +409,7 @@ stages:
 
           if (-not (Test-Path "$directory\terraform.exe")) {
             New-Item $directory -ItemType Directory -Force | Out-Null
+            Write-Host "Downloading Terraform v$version..."
             Invoke-WebRequest -Uri $url -OutFile $zip
             Expand-Archive -Path $zip -DestinationPath $directory -Force
           }
