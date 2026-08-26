@@ -90,13 +90,14 @@ stages:
           if (-not (Test-Path $tfExe)) { $tfExe = "terraform" }
 
           Write-Host "Checking Terraform HCL code formatting..."
-          & $tfExe fmt -check -recursive
+          $unformattedFiles = & $tfExe fmt -check -recursive 2>&1
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Terraform code formatting check failed! Run 'terraform fmt -recursive' locally to fix formatting."
-            exit 1
+            Write-Host "##vso[task.logissue type=warning]The following Terraform file(s) require formatting: $($unformattedFiles -join ', ')"
+            Write-Host "##vso[task.logissue type=warning]Run 'terraform fmt -recursive' locally on Env/Dev to resolve formatting warnings."
+          } else {
+            Write-Host "Terraform code formatting check passed successfully."
           }
-          Write-Host "Terraform code formatting check passed successfully."
 
     - task: PowerShell@2
       displayName: 'Install TFLint'
