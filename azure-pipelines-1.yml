@@ -1,52 +1,129 @@
 trigger: none
 
 pool:
-  vmImage: ubuntu-latest
+  name: Akhilesh
 
 variables:
   terraformWorkingDirectory: '$(System.DefaultWorkingDirectory)/infra'
 
+jobs:
 
-steps:
-
-# Install Terraform
-- task: TerraformInstaller@1
-  displayName: Install Terraform
-  inputs:
-    terraformVersion: 'latest'
-
-
-# Terraform Init
-- task: TerraformTask@5
-  displayName: Terraform Init
-  inputs:
-    provider: 'azurerm'
-    command: 'init'
-    workingDirectory: '$(terraformWorkingDirectory)'
-
-    backendServiceArm: 'Azure-Service-Connection'
-
-    backendAzureRmResourceGroupName: 'g2'
-    backendAzureRmStorageAccountName: 'gstorageakhilesh'
-    backendAzureRmContainerName: 'g2cant'
-    backendAzureRmKey: 'terraform.tfstate'
-
-
-# Terraform Validate
-- task: TerraformTask@5
-  displayName: Terraform Validate
-  inputs:
-    provider: 'azurerm'
-    command: 'validate'
-    workingDirectory: '$(terraformWorkingDirectory)'
-
-
-# Terraform Plan
-- task: TerraformTask@5
+# =================================================
+# JOB 1: TERRAFORM INIT, VALIDATE AND PLAN
+# =================================================
+- job: TerraformPlan
   displayName: Terraform Plan
-  inputs:
-    provider: 'azurerm'
-    command: 'plan'
-    workingDirectory: '$(terraformWorkingDirectory)'
-    environmentServiceNameAzureRM: 'Azure-Service-Connection'
-    commandOptions: '-out=tfplan'
+  steps:
+
+  - task: TerraformInstaller@1
+    displayName: Install Terraform
+    inputs:
+      terraformVersion: 'latest'
+
+  - task: TerraformTask@5
+    displayName: Terraform Init
+    inputs:
+      provider: 'azurerm'
+      command: 'init'
+      workingDirectory: '$(terraformWorkingDirectory)'
+      backendServiceArm: 'akhilesh25'
+      backendAzureRmResourceGroupName: 'g2'
+      backendAzureRmStorageAccountName: 'gstorageakhilesh'
+      backendAzureRmContainerName: 'g2cant'
+      backendAzureRmKey: 'terraform.tfstate'
+
+  - task: TerraformTask@5
+    displayName: Terraform Validate
+    inputs:
+      provider: 'azurerm'
+      command: 'validate'
+      workingDirectory: '$(terraformWorkingDirectory)'
+
+  - task: TerraformTask@5
+    displayName: Terraform Plan
+    inputs:
+      provider: 'azurerm'
+      command: 'plan'
+      workingDirectory: '$(terraformWorkingDirectory)'
+      environmentServiceNameAzureRM: 'akhilesh25'
+      commandOptions: '-out=tfplan'
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Terraform Plan
+    inputs:
+      targetPath: '$(terraformWorkingDirectory)/tfplan'
+      artifact: 'terraform-plan'
+      publishLocation: 'pipeline'
+
+
+# =================================================
+# JOB 2: MANUAL APPROVAL
+# =================================================
+- job: ManualApproval
+  displayName: Manual Approval
+  dependsOn: TerraformPlan
+  condition: succeeded()
+  pool: server
+  timeoutInMinutes: 1440
+
+  steps:
+
+  - task: ManualValidation@1
+    displayName: Approve Terraform Deployment
+    timeoutInMinutes: 1440
+    inputs:
+      notifyUsers: |
+        your-email@company.com
+      approvers: |
+        your-email@company.com
+      instructions: |
+        Terraform Plan has completed successfully.
+        Review the Terraform Plan output.
+        Click Resume to apply the infrastructure.
+      onTimeout: 'reject'
+
+
+# =================================================
+# JOB 3: TERRAFORM APPLY
+# =================================================
+- job: TerraformApply
+  displayName: Terraform Apply
+  dependsOn: ManualApproval
+  condition: succeeded()
+
+  pool:
+    name: Akhilesh
+
+  steps:
+
+  - task: TerraformInstaller@1
+    displayName: Install Terraform
+    inputs:
+      terraformVersion: 'latest'
+
+  - task: TerraformTask@5
+    displayName: Terraform Re-Init
+    inputs:
+      provider: 'azurerm'
+      command: 'init'
+      workingDirectory: '$(terraformWorkingDirectory)'
+      backendServiceArm: 'akhilesh25'
+      backendAzureRmResourceGroupName: 'g2'
+      backendAzureRmStorageAccountName: 'gstorageakhilesh'
+      backendAzureRmContainerName: 'g2cant'
+      backendAzureRmKey: 'terraform.tfstate'
+
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Approved Terraform Plan
+    inputs:
+      artifact: 'terraform-plan'
+      path: '$(terraformWorkingDirectory)'
+
+  - task: TerraformTask@5
+    displayName: Terraform Apply
+    inputs:
+      provider: 'azurerm'
+      command: 'apply'
+      workingDirectory: '$(terraformWorkingDirectory)'
+      environmentServiceNameAzureRM: 'akhilesh25'
+      commandOptions: '-auto-approve tfplan'
