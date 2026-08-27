@@ -437,6 +437,7 @@ stages:
   jobs:
   - job: InfracostJob
     displayName: 'Infrastructure Cost Estimation'
+    continueOnError: true
     pool:
       name: akhileshrai
     steps:
