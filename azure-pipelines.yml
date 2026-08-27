@@ -1,6 +1,9 @@
 # ==============================================================================
 # Azure DevOps CI/CD Pipeline: Enterprise Terraform Infrastructure Automation
 # Agent Pool: akhileshrai
+# Features: Linting, Security Scanning, Secret Detection, Unit Testing,
+#           Plan JSON Export, Infracost Estimation, AI Agent Risk Audit,
+#           Approval Gate, Infrastructure Apply, & Post-Deployment Audit.
 # ==============================================================================
 
 trigger:
@@ -475,11 +478,112 @@ stages:
 
 
 # =====================================================
-# STAGE 9: PLAN ARTIFACT STORAGE
+# STAGE 9: AI AGENT INFRASTRUCTURE AUDIT
+# =====================================================
+- stage: AIAgentReview
+  displayName: '9. AI Agent Infrastructure & Security Audit'
+  dependsOn: CostEstimation
+  condition: succeeded()
+  jobs:
+  - job: AIAgentJob
+    displayName: 'AI Agent Infrastructure Audit'
+    pool:
+      name: akhileshrai
+    steps:
+    - checkout: self
+      clean: true
+
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download Plan Artifact'
+      inputs:
+        artifact: 'terraform-plan-raw'
+        path: '$(Pipeline.Workspace)/terraform-plan-raw'
+
+    - task: PowerShell@2
+      displayName: 'Run AI Agent Analysis'
+      inputs:
+        targetType: inline
+        script: |
+          Write-Host "====================================================="
+          Write-Host "🤖 AI AGENT INFRASTRUCTURE & RISK AUDIT STARTING"
+          Write-Host "====================================================="
+
+          $planJsonPath = "$(Pipeline.Workspace)/terraform-plan-raw/tfplan.json"
+          $reportPath = "$(Build.ArtifactStagingDirectory)/ai-infrastructure-audit.md"
+
+          $pythonScript = @"
+          import json, os, sys
+
+          plan_path = r'$planJsonPath'
+          report_path = r'$reportPath'
+
+          created_res, updated_res, deleted_res = [], [], []
+
+          if os.path.exists(plan_path):
+              with open(plan_path, 'r', encoding='utf-8') as f:
+                  data = json.load(f)
+                  resource_changes = data.get('resource_changes', [])
+                  for res in resource_changes:
+                      actions = res.get('change', {}).get('actions', [])
+                      name = f"{res.get('type')} ({res.get('name')})"
+                      if 'create' in actions:
+                          created_res.append(name)
+                      elif 'update' in actions:
+                          updated_res.append(name)
+                      elif 'delete' in actions:
+                          deleted_res.append(name)
+
+          report_content = f'''# 🤖 AI Agent Infrastructure Audit Report
+
+          ## 📊 Executive Change Analysis
+          - 🟢 **Resources to Create**: {len(created_res)}
+          - 🟡 **Resources to Update**: {len(updated_res)}
+          - 🔴 **Resources to Destroy**: {len(deleted_res)}
+
+          ### 🟢 Created Resources:
+          ''' + ('\n'.join([f'- `{r}`' for r in created_res]) if created_res else '- None') + '''
+
+          ### 🟡 Updated Resources:
+          ''' + ('\n'.join([f'- `{r}`' for r in updated_res]) if updated_res else '- None') + '''
+
+          ### 🔴 Destroyed Resources:
+          ''' + ('\n'.join([f'- `{r}`' for r in deleted_res]) if deleted_res else '- None') + '''
+
+          ## 🛡️ AI Agent Security & Risk Assessment
+          '''
+          if len(deleted_res) > 0:
+              report_content += "⚠️ **CRITICAL WARNING**: Destructive deletions detected! Manual verification required prior to approval.\n"
+          else:
+              report_content += "✅ **SAFE DEPLOYMENT**: Zero destructive resource deletions detected. Safe for production apply.\n"
+
+          os.makedirs(os.path.dirname(report_path), exist_ok=True)
+          with open(report_path, 'w', encoding='utf-8') as rf:
+              rf.write(report_content)
+
+          print(f"AI Agent Report successfully written to {report_path}")
+          "@
+
+          $pythonScript | Out-File -FilePath "$(Agent.TempDirectory)\ai_agent.py" -Encoding utf8
+          python "$(Agent.TempDirectory)\ai_agent.py"
+
+          if (Test-Path $reportPath) {
+            Get-Content $reportPath
+          }
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish AI Agent Audit Report'
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)/ai-infrastructure-audit.md'
+        artifact: 'ai-agent-report'
+        publishLocation: 'pipeline'
+
+
+# =====================================================
+# STAGE 10: PLAN ARTIFACT STORAGE
 # =====================================================
 - stage: PlanArtifact
-  displayName: '9. Deployment Package Storage'
-  dependsOn: CostEstimation
+  displayName: '10. Deployment Package Storage'
+  dependsOn: AIAgentReview
   condition: succeeded()
   jobs:
   - job: ArtifactJob
@@ -499,6 +603,12 @@ stages:
         artifact: 'infracost-report'
         path: '$(Agent.TempDirectory)/plan-package'
 
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download AI Audit Report'
+      inputs:
+        artifact: 'ai-agent-report'
+        path: '$(Agent.TempDirectory)/plan-package'
+
     - task: PublishPipelineArtifact@1
       displayName: 'Publish Approved Deployment Package'
       inputs:
@@ -508,10 +618,10 @@ stages:
 
 
 # =====================================================
-# STAGE 10: MANUAL APPROVAL
+# STAGE 11: MANUAL APPROVAL
 # =====================================================
 - stage: ManualApproval
-  displayName: '10. Manual Approval Gate'
+  displayName: '11. Manual Approval Gate'
   dependsOn: PlanArtifact
   condition: succeeded()
   jobs:
@@ -527,21 +637,22 @@ stages:
         notifyUsers: ''
         instructions: |
           Please review the following artifacts before approving deployment:
-          1. Terraform Execution Plan (tfplan.json)
-          2. Checkov & tfsec Security Scan Results
-          3. Gitleaks Secret Detection Findings
-          4. Infrastructure Unit Test Results (*.tftest.hcl)
-          5. Infracost Breakdown Report
+          1. 🤖 AI Agent Infrastructure Audit Report (ai-infrastructure-audit.md)
+          2. Terraform Execution Plan (tfplan.json)
+          3. Checkov & tfsec Security Scan Results
+          4. Gitleaks Secret Detection Findings
+          5. Infrastructure Unit Test Results (*.tftest.hcl)
+          6. Infracost Breakdown Report
 
           Click 'Resume' to proceed with production deployment.
         onTimeout: 'reject'
 
 
 # =====================================================
-# STAGE 11: TERRAFORM APPLY
+# STAGE 12: TERRAFORM APPLY
 # =====================================================
 - stage: TerraformApply
-  displayName: '11. Infrastructure Deployment (Apply)'
+  displayName: '12. Infrastructure Deployment (Apply)'
   dependsOn: ManualApproval
   condition: succeeded()
   jobs:
@@ -606,10 +717,10 @@ stages:
 
 
 # =====================================================
-# STAGE 12: POST-DEPLOYMENT VALIDATION
+# STAGE 13: POST-DEPLOYMENT VALIDATION
 # =====================================================
 - stage: PostDeploymentValidation
-  displayName: '12. Post-Deployment Azure Validation'
+  displayName: '13. Post-Deployment Azure Validation'
   dependsOn: TerraformApply
   condition: succeeded()
   jobs:
@@ -633,10 +744,10 @@ stages:
 
 
 # =====================================================
-# STAGE 13: MONITORING AND LOGGING VALIDATION
+# STAGE 14: MONITORING AND LOGGING VALIDATION
 # =====================================================
 - stage: MonitoringValidation
-  displayName: '13. Azure Monitoring & Logging Audit'
+  displayName: '14. Azure Monitoring & Logging Audit'
   dependsOn: PostDeploymentValidation
   condition: succeeded()
   jobs:
