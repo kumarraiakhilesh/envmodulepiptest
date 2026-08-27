@@ -2,7 +2,7 @@
 # Azure DevOps CI/CD Pipeline: Enterprise Terraform Infrastructure Automation
 # Agent Pool: akhileshrai
 # Features: Linting, Security Scanning, Secret Detection, Unit Testing,
-#           Plan JSON Export, Infracost Estimation, AI Agent Risk Audit,
+#           Plan JSON Export, AI Agent Risk Audit,
 #           Approval Gate, Infrastructure Apply, & Post-Deployment Audit.
 # ==============================================================================
 
@@ -431,58 +431,11 @@ stages:
 
 
 # =====================================================
-# STAGE 8: INFRASTRUCTURE COST ESTIMATION
-# =====================================================
-- stage: CostEstimation
-  displayName: '8. Infracost Cost Estimation'
-  dependsOn: TerraformPlan
-  condition: succeeded()
-  jobs:
-  - job: InfracostJob
-    displayName: 'Infrastructure Cost Estimation'
-    continueOnError: true
-    pool:
-      name: akhileshrai
-    steps:
-    - checkout: self
-      clean: true
-
-    - task: DownloadPipelineArtifact@2
-      displayName: 'Download Terraform Plan Artifact'
-      inputs:
-        artifact: 'terraform-plan-raw'
-        path: '$(Pipeline.Workspace)/terraform-plan-raw'
-
-    - task: PowerShell@2
-      displayName: 'Install & Run Infracost'
-      env:
-        INFRACOST_API_KEY: $(INFRACOST_API_KEY)
-      inputs:
-        targetType: inline
-        script: |
-          if ([string]::IsNullOrWhiteSpace($env:INFRACOST_API_KEY)) { Write-Error "INFRACOST_API_KEY secret missing."; exit 1 }
-          if (-not (Get-Command infracost -ErrorAction SilentlyContinue)) {
-            choco install infracost -y --no-progress
-            if ($LASTEXITCODE -ne 0) { Write-Error "Infracost installation failed."; exit 1 }
-          }
-          infracost breakdown --path "$(Pipeline.Workspace)/terraform-plan-raw/tfplan.json" --format json --out-file "$(Build.ArtifactStagingDirectory)/infracost.json"
-          if ($LASTEXITCODE -ne 0) { Write-Error "Infracost failed."; exit 1 }
-          infracost output --path "$(Build.ArtifactStagingDirectory)/infracost.json" --format table
-
-    - task: PublishPipelineArtifact@1
-      displayName: 'Publish Infracost Report Artifact'
-      inputs:
-        targetPath: '$(Build.ArtifactStagingDirectory)/infracost.json'
-        artifact: 'infracost-report'
-        publishLocation: 'pipeline'
-
-
-# =====================================================
-# STAGE 9: AI AGENT INFRASTRUCTURE AUDIT
+# STAGE 8: AI AGENT INFRASTRUCTURE AUDIT
 # =====================================================
 - stage: AIAgentReview
-  displayName: '9. AI Agent Infrastructure & Security Audit'
-  dependsOn: CostEstimation
+  displayName: '8. AI Agent Infrastructure & Security Audit'
+  dependsOn: TerraformPlan
   condition: succeeded()
   jobs:
   - job: AIAgentJob
@@ -579,10 +532,10 @@ stages:
 
 
 # =====================================================
-# STAGE 10: PLAN ARTIFACT STORAGE
+# STAGE 9: PLAN ARTIFACT STORAGE
 # =====================================================
 - stage: PlanArtifact
-  displayName: '10. Deployment Package Storage'
+  displayName: '9. Deployment Package Storage'
   dependsOn: AIAgentReview
   condition: succeeded()
   jobs:
@@ -595,12 +548,6 @@ stages:
       displayName: 'Download Plan Artifact'
       inputs:
         artifact: 'terraform-plan-raw'
-        path: '$(Agent.TempDirectory)/plan-package'
-
-    - task: DownloadPipelineArtifact@2
-      displayName: 'Download Cost Report'
-      inputs:
-        artifact: 'infracost-report'
         path: '$(Agent.TempDirectory)/plan-package'
 
     - task: DownloadPipelineArtifact@2
@@ -618,10 +565,10 @@ stages:
 
 
 # =====================================================
-# STAGE 11: MANUAL APPROVAL
+# STAGE 10: MANUAL APPROVAL
 # =====================================================
 - stage: ManualApproval
-  displayName: '11. Manual Approval Gate'
+  displayName: '10. Manual Approval Gate'
   dependsOn: PlanArtifact
   condition: succeeded()
   jobs:
@@ -642,17 +589,16 @@ stages:
           3. Checkov & tfsec Security Scan Results
           4. Gitleaks Secret Detection Findings
           5. Infrastructure Unit Test Results (*.tftest.hcl)
-          6. Infracost Breakdown Report
 
           Click 'Resume' to proceed with production deployment.
         onTimeout: 'reject'
 
 
 # =====================================================
-# STAGE 12: TERRAFORM APPLY
+# STAGE 11: TERRAFORM APPLY
 # =====================================================
 - stage: TerraformApply
-  displayName: '12. Infrastructure Deployment (Apply)'
+  displayName: '11. Infrastructure Deployment (Apply)'
   dependsOn: ManualApproval
   condition: succeeded()
   jobs:
@@ -717,10 +663,10 @@ stages:
 
 
 # =====================================================
-# STAGE 13: POST-DEPLOYMENT VALIDATION
+# STAGE 12: POST-DEPLOYMENT VALIDATION
 # =====================================================
 - stage: PostDeploymentValidation
-  displayName: '13. Post-Deployment Azure Validation'
+  displayName: '12. Post-Deployment Azure Validation'
   dependsOn: TerraformApply
   condition: succeeded()
   jobs:
@@ -744,10 +690,10 @@ stages:
 
 
 # =====================================================
-# STAGE 14: MONITORING AND LOGGING VALIDATION
+# STAGE 13: MONITORING AND LOGGING VALIDATION
 # =====================================================
 - stage: MonitoringValidation
-  displayName: '14. Azure Monitoring & Logging Audit'
+  displayName: '13. Azure Monitoring & Logging Audit'
   dependsOn: PostDeploymentValidation
   condition: succeeded()
   jobs:
